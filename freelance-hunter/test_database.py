@@ -1,9 +1,15 @@
-from core.database.models import init_database, Platform, Client, Job, MatchLevel, VerificationStatus, RiskLevel, JobStatus
-from core.database.repository import DatabaseManager, Repositories
-from core.config.loader import get_config
-from core.utils import parse_date
 import os
 from datetime import datetime
+
+from core.database.models import (
+    JobStatus,
+    MatchLevel,
+    RiskLevel,
+    VerificationStatus,
+    init_database,
+)
+from core.database.repository import DatabaseManager, Repositories
+from core.utils import parse_date
 
 # Clean up test database
 test_dir = "data"

@@ -3,13 +3,13 @@ Proposal/Application Agent - Generates customized proposals for jobs.
 """
 import logging
 import random
-from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
-from .base import BaseAgent, AgentResult
-from core.utils import clean_text, truncate_text
 from core.config.loader import get_config
+
+from .base import AgentResult, BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class ProposalSet:
 class ProposalAgent(BaseAgent):
     """Agent that generates customized proposals for jobs."""
     
-    def __init__(self, config: Dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] = None, db_manager=None):
         super().__init__("proposal_agent", config, db_manager)
         self.config = config or get_config()._config
         self.proposal_config = self.config.get("proposal", {})
@@ -65,7 +65,7 @@ class ProposalAgent(BaseAgent):
             items_processed=len(proposals)
         )
     
-    def _generate_proposals(self, job: Dict[str, Any]) -> ProposalSet:
+    def _generate_proposals(self, job: dict[str, Any]) -> ProposalSet:
         """Generate three types of proposals for a job."""
         job_id = job.get("job_id", "unknown")
         
@@ -85,7 +85,7 @@ class ProposalAgent(BaseAgent):
             generated_at=datetime.utcnow()
         )
     
-    def _analyze_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_job(self, job: dict[str, Any]) -> dict[str, Any]:
         """Analyze job to extract key information for proposal."""
         title = job.get("title", "")
         description = job.get("full_description", "")
@@ -113,7 +113,7 @@ class ProposalAgent(BaseAgent):
             "is_hourly": job.get("fixed_price_or_hourly") == "hourly"
         }
     
-    def _extract_key_requirements(self, description: str) -> List[str]:
+    def _extract_key_requirements(self, description: str) -> list[str]:
         """Extract key requirements from job description."""
         requirements = []
         desc_lower = description.lower()
@@ -142,7 +142,7 @@ class ProposalAgent(BaseAgent):
         
         return list(set(requirements))[:8]
     
-    def _extract_deliverables(self, description: str) -> List[str]:
+    def _extract_deliverables(self, description: str) -> list[str]:
         """Extract deliverables from job description."""
         deliverables = []
         desc_lower = description.lower()
@@ -158,7 +158,7 @@ class ProposalAgent(BaseAgent):
         
         return deliverables[:5]
     
-    def _extract_tools(self, description: str) -> List[str]:
+    def _extract_tools(self, description: str) -> list[str]:
         """Extract mentioned tools/software from description."""
         tools = []
         desc_lower = description.lower()
@@ -175,7 +175,7 @@ class ProposalAgent(BaseAgent):
         
         return tools
     
-    def _generate_short_proposal(self, job: Dict[str, Any], analysis: Dict[str, Any]) -> str:
+    def _generate_short_proposal(self, job: dict[str, Any], analysis: dict[str, Any]) -> str:
         """Generate short proposal (2-3 paragraphs)."""
         client_name = analysis["client_name"]
         title = analysis["title"]
@@ -230,7 +230,7 @@ class ProposalAgent(BaseAgent):
 
         return "\n".join(parts)
     
-    def _generate_normal_proposal(self, job: Dict[str, Any], analysis: Dict[str, Any]) -> str:
+    def _generate_normal_proposal(self, job: dict[str, Any], analysis: dict[str, Any]) -> str:
         """Generate normal proposal (4-5 paragraphs)."""
         client_name = analysis["client_name"]
         title = analysis["title"]
@@ -308,7 +308,7 @@ class ProposalAgent(BaseAgent):
 
         return "\n".join(parts)
     
-    def _generate_ultra_short_proposal(self, job: Dict[str, Any], analysis: Dict[str, Any]) -> str:
+    def _generate_ultra_short_proposal(self, job: dict[str, Any], analysis: dict[str, Any]) -> str:
         """Generate ultra-short proposal (1-2 sentences)."""
         title = analysis["title"]
         matched_skills = analysis["matched_skills"]
@@ -325,7 +325,7 @@ class ProposalAgent(BaseAgent):
         
         return random.choice(templates)
     
-    def _proposal_to_dict(self, proposal: ProposalSet) -> Dict[str, Any]:
+    def _proposal_to_dict(self, proposal: ProposalSet) -> dict[str, Any]:
         """Convert ProposalSet to dictionary."""
         return {
             "job_id": proposal.job_id,
@@ -343,7 +343,7 @@ class ProposalService:
         self.db_manager = db_manager
         self.agent = ProposalAgent(db_manager=db_manager)
     
-    async def generate_proposals(self, jobs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def generate_proposals(self, jobs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Generate proposals for jobs."""
         result = await self.agent.run(jobs=jobs)
         

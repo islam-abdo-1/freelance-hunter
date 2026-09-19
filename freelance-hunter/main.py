@@ -3,22 +3,23 @@
 Freelance Hunter - Main Entry Point
 Multi-agent system for discovering and analyzing freelance job opportunities.
 """
-import asyncio
 import argparse
+import asyncio
 import logging
-import sys
 import os
+import sys
 from datetime import datetime
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from core.config.loader import get_config, reload_config
+from agents.orchestrator import FreelanceHunterOrchestrator, run_pipeline
+from core.config.loader import get_config
 from core.database.models import init_database
 from core.database.repository import DatabaseManager
-from agents.orchestrator import FreelanceHunterOrchestrator, run_pipeline
 from core.scheduler.scheduler import setup_default_scheduler
 from exports.manager import export_jobs
+
 
 # Setup logging
 def setup_logging(level: str = "INFO"):
@@ -37,7 +38,7 @@ def setup_logging(level: str = "INFO"):
 
 async def run_scan(args):
     """Run a single scan."""
-    print(f"Starting Freelance Hunter scan...")
+    print("Starting Freelance Hunter scan...")
     print(f"Priority: {args.priority} (1=24h, 2=72h, 3=7d, 4=30d)")
     print(f"Max pages per platform: {args.max_pages}")
     

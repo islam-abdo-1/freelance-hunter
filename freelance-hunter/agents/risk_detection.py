@@ -3,14 +3,14 @@ Risk Detection Agent - Identifies red flags and risks in job listings.
 """
 import logging
 import re
-from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
-from .base import BaseAgent, AgentResult
-from core.utils import clean_text
 from core.config.loader import get_config
+
+from .base import AgentResult, BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class RiskAssessment:
     """Complete risk assessment for a job."""
     job_id: str
     overall_risk: RiskLevel
-    red_flags: List[RedFlag]
+    red_flags: list[RedFlag]
     risk_score: float  # 0-100 (higher = riskier)
     summary: str
 
@@ -45,7 +45,7 @@ class RiskAssessment:
 class RiskDetectionAgent(BaseAgent):
     """Agent that detects red flags and assesses risk in job listings."""
     
-    def __init__(self, config: Dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] = None, db_manager=None):
         super().__init__("risk_detection_agent", config, db_manager)
         self.config = config or get_config()._config
         self.risk_config = self.config.get("risk_detection", {})
@@ -62,7 +62,7 @@ class RiskDetectionAgent(BaseAgent):
             "admin_hourly_max": 45
         }
     
-    def _build_patterns(self) -> Dict[str, Dict[str, Any]]:
+    def _build_patterns(self) -> dict[str, dict[str, Any]]:
         """Build red flag detection patterns."""
         return {
             "unrealistic_promises": {
@@ -218,7 +218,7 @@ class RiskDetectionAgent(BaseAgent):
             items_processed=len(assessments)
         )
     
-    def _assess_risk(self, job: Dict[str, Any]) -> RiskAssessment:
+    def _assess_risk(self, job: dict[str, Any]) -> RiskAssessment:
         """Assess risk for a single job."""
         job_id = job.get("job_id", "unknown")
         red_flags = []
@@ -276,7 +276,7 @@ class RiskDetectionAgent(BaseAgent):
         end = min(len(text), match.end() + 100)
         return "..." + text[start:end] + "..."
     
-    def _check_budget_red_flags(self, job: Dict[str, Any]) -> List[RedFlag]:
+    def _check_budget_red_flags(self, job: dict[str, Any]) -> list[RedFlag]:
         """Check for budget-related red flags."""
         flags = []
         
@@ -331,7 +331,7 @@ class RiskDetectionAgent(BaseAgent):
         
         return flags
     
-    def _check_client_red_flags(self, job: Dict[str, Any]) -> List[RedFlag]:
+    def _check_client_red_flags(self, job: dict[str, Any]) -> list[RedFlag]:
         """Check for client-related red flags."""
         flags = []
         
@@ -374,7 +374,7 @@ class RiskDetectionAgent(BaseAgent):
         
         return flags
     
-    def _calculate_overall_risk(self, red_flags: List[RedFlag]) -> Tuple[RiskLevel, float]:
+    def _calculate_overall_risk(self, red_flags: list[RedFlag]) -> tuple[RiskLevel, float]:
         """Calculate overall risk level and score."""
         if not red_flags:
             return RiskLevel.LOW, 0.0
@@ -404,16 +404,14 @@ class RiskDetectionAgent(BaseAgent):
         # Determine overall level
         if severity_counts[RiskLevel.CRITICAL] > 0:
             return RiskLevel.CRITICAL, score
-        elif severity_counts[RiskLevel.HIGH] >= 2:
-            return RiskLevel.HIGH, score
-        elif severity_counts[RiskLevel.HIGH] >= 1 or severity_counts[RiskLevel.MEDIUM] >= 3:
+        elif severity_counts[RiskLevel.HIGH] >= 2 or severity_counts[RiskLevel.HIGH] >= 1 or severity_counts[RiskLevel.MEDIUM] >= 3:
             return RiskLevel.HIGH, score
         elif severity_counts[RiskLevel.MEDIUM] >= 1:
             return RiskLevel.MEDIUM, score
         else:
             return RiskLevel.LOW, score
     
-    def _generate_summary(self, red_flags: List[RedFlag], overall_risk: RiskLevel) -> str:
+    def _generate_summary(self, red_flags: list[RedFlag], overall_risk: RiskLevel) -> str:
         """Generate human-readable risk summary."""
         if not red_flags:
             return "No red flags detected. Job appears legitimate."
@@ -437,7 +435,7 @@ class RiskDetectionAgent(BaseAgent):
         
         return "".join(parts)
     
-    def _assessment_to_dict(self, assessment: RiskAssessment) -> Dict[str, Any]:
+    def _assessment_to_dict(self, assessment: RiskAssessment) -> dict[str, Any]:
         """Convert RiskAssessment to dictionary."""
         return {
             "job_id": assessment.job_id,
@@ -464,7 +462,7 @@ class RiskDetectionService:
         self.db_manager = db_manager
         self.agent = RiskDetectionAgent(db_manager=db_manager)
     
-    async def assess_risks(self, jobs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def assess_risks(self, jobs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Assess risks for jobs and update database."""
         result = await self.agent.run(jobs=jobs)
         

@@ -1,19 +1,19 @@
 """
 Scheduler for automated job hunting runs.
 """
-import asyncio
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, Callable
+from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 
-from core.config.loader import get_config
 from agents.orchestrator import FreelanceHunterOrchestrator, run_pipeline
+from core.config.loader import get_config
 from core.database.repository import DatabaseManager
 
 logger = logging.getLogger(__name__)
@@ -36,17 +36,17 @@ class ScheduledJob:
     priority: int = 1
     max_pages: int = 5
     enabled: bool = True
-    last_run: Optional[datetime] = None
-    next_run: Optional[datetime] = None
+    last_run: datetime | None = None
+    next_run: datetime | None = None
     run_count: int = 0
     last_status: str = "pending"
-    last_error: Optional[str] = None
+    last_error: str | None = None
 
 
 class JobHunterScheduler:
     """Scheduler for automated freelance job hunting."""
     
-    def __init__(self, db_manager: DatabaseManager = None, config: Dict[str, Any] = None):
+    def __init__(self, db_manager: DatabaseManager = None, config: dict[str, Any] = None):
         self.db_manager = db_manager
         self.config = config or get_config()._config
         self.scheduler_config = self.config.get("scheduler", {})
@@ -61,15 +61,15 @@ class JobHunterScheduler:
         self.available_intervals = self.scheduler_config.get("intervals", ["1h", "3h", "6h", "12h", "24h"])
         
         # Scheduled jobs registry
-        self.scheduled_jobs: Dict[str, ScheduledJob] = {}
+        self.scheduled_jobs: dict[str, ScheduledJob] = {}
         
         # Orchestrator (set later)
-        self.orchestrator: Optional[FreelanceHunterOrchestrator] = None
+        self.orchestrator: FreelanceHunterOrchestrator | None = None
         
         # Callbacks
-        self.on_job_start: Optional[Callable] = None
-        self.on_job_complete: Optional[Callable] = None
-        self.on_job_error: Optional[Callable] = None
+        self.on_job_start: Callable | None = None
+        self.on_job_complete: Callable | None = None
+        self.on_job_error: Callable | None = None
     
     def set_orchestrator(self, orchestrator: FreelanceHunterOrchestrator):
         """Set the orchestrator instance."""
@@ -158,7 +158,7 @@ class JobHunterScheduler:
             self.scheduled_jobs[job_id].enabled = False
             self.scheduler.pause_job(job_id)
     
-    def get_scheduled_jobs(self) -> Dict[str, ScheduledJob]:
+    def get_scheduled_jobs(self) -> dict[str, ScheduledJob]:
         """Get all scheduled jobs."""
         # Update next_run times
         for job_id, scheduled_job in self.scheduled_jobs.items():
@@ -168,7 +168,7 @@ class JobHunterScheduler:
         
         return self.scheduled_jobs
     
-    def get_job_status(self, job_id: str) -> Optional[ScheduledJob]:
+    def get_job_status(self, job_id: str) -> ScheduledJob | None:
         """Get status of a scheduled job."""
         return self.scheduled_jobs.get(job_id)
     
@@ -246,7 +246,7 @@ class JobHunterScheduler:
             triggered_by="manual"
         )
     
-    def get_next_run_times(self) -> Dict[str, datetime]:
+    def get_next_run_times(self) -> dict[str, datetime]:
         """Get next run times for all jobs."""
         next_runs = {}
         for job_id, scheduled_job in self.scheduled_jobs.items():
@@ -257,10 +257,10 @@ class JobHunterScheduler:
 
 
 # Global scheduler instance
-_scheduler_instance: Optional[JobHunterScheduler] = None
+_scheduler_instance: JobHunterScheduler | None = None
 
 
-def get_scheduler(db_manager: DatabaseManager = None, config: Dict[str, Any] = None) -> JobHunterScheduler:
+def get_scheduler(db_manager: DatabaseManager = None, config: dict[str, Any] = None) -> JobHunterScheduler:
     """Get global scheduler instance."""
     global _scheduler_instance
     if _scheduler_instance is None:

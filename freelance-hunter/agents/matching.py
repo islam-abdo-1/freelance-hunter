@@ -2,16 +2,15 @@
 Job Matching Agent - Evaluates jobs against user profile and skills.
 """
 import logging
-from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
-from .base import BaseAgent, AgentResult
-from core.utils import (
-    extract_skills_from_text, calculate_similarity, format_time_ago
-)
 from core.config.loader import get_config
+from core.utils import calculate_similarity, extract_skills_from_text
+
+from .base import AgentResult, BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +29,9 @@ class MatchResult:
     job_id: str
     match_level: MatchLevel
     match_score: float  # 0-100
-    score_breakdown: Dict[str, float]
-    matched_skills: List[str]
-    missing_skills: List[str]
+    score_breakdown: dict[str, float]
+    matched_skills: list[str]
+    missing_skills: list[str]
     match_reason: str
     recommended: bool
 
@@ -40,7 +39,7 @@ class MatchResult:
 class JobMatchingAgent(BaseAgent):
     """Agent that matches jobs against user profile."""
     
-    def __init__(self, config: Dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] = None, db_manager=None):
         super().__init__("job_matching_agent", config, db_manager)
         self.config = config or get_config()._config
         self.matching_config = self.config.get("matching", {})
@@ -101,7 +100,7 @@ class JobMatchingAgent(BaseAgent):
             items_processed=len(results)
         )
     
-    def _match_job(self, job: Dict[str, Any]) -> MatchResult:
+    def _match_job(self, job: dict[str, Any]) -> MatchResult:
         """Match a single job against user profile."""
         job_id = job.get("job_id", "unknown")
         
@@ -154,7 +153,7 @@ class JobMatchingAgent(BaseAgent):
             recommended=recommended
         )
     
-    def _calculate_skill_match(self, job: Dict[str, Any]) -> Tuple[float, List[str], List[str]]:
+    def _calculate_skill_match(self, job: dict[str, Any]) -> tuple[float, list[str], list[str]]:
         """Calculate skill match score (0-30)."""
         # Get job skills
         job_skills = job.get("required_skills", [])
@@ -204,7 +203,7 @@ class JobMatchingAgent(BaseAgent):
         
         return min(score, self.max_scores["skill_match"]), matched, missing[:10]
     
-    def _calculate_recency_score(self, job: Dict[str, Any]) -> float:
+    def _calculate_recency_score(self, job: dict[str, Any]) -> float:
         """Calculate recency score (0-20)."""
         date_posted = job.get("date_posted")
         if not date_posted:
@@ -233,7 +232,7 @@ class JobMatchingAgent(BaseAgent):
         except Exception:
             return 5.0
     
-    def _calculate_beginner_accessibility(self, job: Dict[str, Any]) -> float:
+    def _calculate_beginner_accessibility(self, job: dict[str, Any]) -> float:
         """Calculate beginner accessibility score (0-15)."""
         score = self.max_scores["beginner_accessibility"]  # Start at max
         
@@ -278,7 +277,7 @@ class JobMatchingAgent(BaseAgent):
         
         return max(0, min(score, self.max_scores["beginner_accessibility"]))
     
-    def _calculate_budget_value(self, job: Dict[str, Any]) -> float:
+    def _calculate_budget_value(self, job: dict[str, Any]) -> float:
         """Calculate budget value score (0-10)."""
         budget_min = job.get("budget_min")
         budget_max = job.get("budget_max")
@@ -351,7 +350,7 @@ class JobMatchingAgent(BaseAgent):
         
         return 5.0
     
-    def _calculate_client_quality(self, job: Dict[str, Any]) -> float:
+    def _calculate_client_quality(self, job: dict[str, Any]) -> float:
         """Calculate client quality score (0-10)."""
         score = 5.0  # Base score
         
@@ -401,7 +400,7 @@ class JobMatchingAgent(BaseAgent):
         
         return max(0, min(score, self.max_scores["client_quality"]))
     
-    def _calculate_competition_score(self, job: Dict[str, Any]) -> float:
+    def _calculate_competition_score(self, job: dict[str, Any]) -> float:
         """Calculate competition score (0-5). Lower competition = higher score."""
         proposals = job.get("proposals_count")
         hires = job.get("hires_count")
@@ -421,7 +420,7 @@ class JobMatchingAgent(BaseAgent):
         else:
             return 0.5  # High competition
     
-    def _calculate_clarity_score(self, job: Dict[str, Any]) -> float:
+    def _calculate_clarity_score(self, job: dict[str, Any]) -> float:
         """Calculate requirement clarity score (0-5)."""
         score = 2.5  # Base
         
@@ -450,7 +449,7 @@ class JobMatchingAgent(BaseAgent):
         
         return max(0, min(score, self.max_scores["clarity"]))
     
-    def _calculate_ease_score(self, job: Dict[str, Any]) -> float:
+    def _calculate_ease_score(self, job: dict[str, Any]) -> float:
         """Calculate ease of delivery score (0-5)."""
         difficulty = job.get("potential_difficulty", "medium")
         effort = job.get("estimated_effort", "medium")
@@ -478,8 +477,8 @@ class JobMatchingAgent(BaseAgent):
         else:
             return MatchLevel.NOT_RELEVANT
     
-    def _generate_match_reason(self, job: Dict[str, Any], matched_skills: List[str],
-                               missing_skills: List[str], breakdown: Dict[str, float]) -> str:
+    def _generate_match_reason(self, job: dict[str, Any], matched_skills: list[str],
+                               missing_skills: list[str], breakdown: dict[str, float]) -> str:
         """Generate human-readable match reason."""
         reasons = []
         
@@ -528,7 +527,7 @@ class JobMatchingAgent(BaseAgent):
         
         return ". ".join(reasons) + "."
     
-    def _result_to_dict(self, result: MatchResult) -> Dict[str, Any]:
+    def _result_to_dict(self, result: MatchResult) -> dict[str, Any]:
         """Convert MatchResult to dictionary."""
         return {
             "job_id": result.job_id,
@@ -549,7 +548,7 @@ class MatchingService:
         self.db_manager = db_manager
         self.agent = JobMatchingAgent(db_manager=db_manager)
     
-    async def match_jobs(self, jobs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def match_jobs(self, jobs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Match jobs and update database."""
         result = await self.agent.run(jobs=jobs)
         

@@ -1,11 +1,11 @@
 """
 Configuration loader for Freelance Hunter.
 """
-import os
-import yaml
 import json
-from typing import Dict, Any, Optional
-from pathlib import Path
+import os
+from typing import Any
+
+import yaml
 
 
 class Config:
@@ -13,8 +13,8 @@ class Config:
     
     def __init__(self, config_path: str = None):
         self.config_path = config_path or self._find_config()
-        self._config: Dict[str, Any] = {}
-        self._profile: Dict[str, Any] = {}
+        self._config: dict[str, Any] = {}
+        self._profile: dict[str, Any] = {}
         self.load()
     
     def _find_config(self) -> str:
@@ -78,7 +78,7 @@ class Config:
         if os.getenv("LOG_LEVEL"):
             self._config.setdefault("logging", {})["level"] = os.getenv("LOG_LEVEL")
     
-    def _default_config(self) -> Dict[str, Any]:
+    def _default_config(self) -> dict[str, Any]:
         """Default configuration."""
         return {
             "database": {
@@ -209,7 +209,7 @@ class Config:
             "api_keys": {}
         }
     
-    def _default_profile(self) -> Dict[str, Any]:
+    def _default_profile(self) -> dict[str, Any]:
         """Default user profile."""
         return {
             "skills": [
@@ -320,17 +320,17 @@ class Config:
             return f"sqlite:///{sqlite_path}"
     
     @property
-    def aisa_api_key(self) -> Optional[str]:
+    def aisa_api_key(self) -> str | None:
         """Get AIsa API key."""
         return self._config.get("api_keys", {}).get("aisa") or os.getenv("AISA_API_KEY")
 
     @property
-    def email_config(self) -> Dict[str, Any]:
+    def email_config(self) -> dict[str, Any]:
         """Get email configuration."""
         return self._config.get("email", {})
 
     @property
-    def email_notifications(self) -> Dict[str, Any]:
+    def email_notifications(self) -> dict[str, Any]:
         """Get email notification preferences from profile."""
         return self._profile.get("email_notifications", {
             "enabled": True,
@@ -342,7 +342,7 @@ class Config:
 
 
 # Global config instance
-_config_instance: Optional[Config] = None
+_config_instance: Config | None = None
 
 
 def get_config(config_path: str = None) -> Config:

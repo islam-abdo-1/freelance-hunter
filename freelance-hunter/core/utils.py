@@ -1,14 +1,14 @@
 """
 Core utilities for Freelance Hunter.
 """
-import re
 import hashlib
-import logging
-from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any, Tuple
-from urllib.parse import urlparse, parse_qs
 import json
+import logging
+import re
+from datetime import datetime, timedelta
 from difflib import SequenceMatcher
+from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ def calculate_similarity(text1: str, text2: str) -> float:
     return SequenceMatcher(None, text1.lower().strip(), text2.lower().strip()).ratio()
 
 
-def is_duplicate_job(job1: Dict[str, Any], job2: Dict[str, Any], threshold: float = 0.85) -> Tuple[bool, str, float]:
+def is_duplicate_job(job1: dict[str, Any], job2: dict[str, Any], threshold: float = 0.85) -> tuple[bool, str, float]:
     """
     Check if two jobs are duplicates.
     Returns (is_duplicate, reason, similarity_score)
@@ -120,7 +120,7 @@ def is_duplicate_job(job1: Dict[str, Any], job2: Dict[str, Any], threshold: floa
     return False, "", 0.0
 
 
-def parse_date(date_str: str) -> Optional[datetime]:
+def parse_date(date_str: str) -> datetime | None:
     """Parse various date formats."""
     if not date_str:
         return None
@@ -156,7 +156,7 @@ def parse_date(date_str: str) -> Optional[datetime]:
     return extract_date_from_text(date_str)
 
 
-def parse_relative_time(text: str) -> Optional[datetime]:
+def parse_relative_time(text: str) -> datetime | None:
     """Parse relative time expressions like '2 hours ago', '3 days ago'."""
     text = text.lower().strip()
     now = datetime.utcnow()
@@ -197,7 +197,7 @@ def parse_relative_time(text: str) -> Optional[datetime]:
     return None
 
 
-def extract_date_from_text(text: str) -> Optional[datetime]:
+def extract_date_from_text(text: str) -> datetime | None:
     """Try to extract a date from arbitrary text."""
     # Look for date patterns
     patterns = [
@@ -238,7 +238,7 @@ def format_time_ago(dt: datetime) -> str:
         return "Just now"
 
 
-def extract_budget(text: str) -> Dict[str, Any]:
+def extract_budget(text: str) -> dict[str, Any]:
     """Extract budget information from text."""
     result = {
         'budget': None,
@@ -315,7 +315,7 @@ def extract_budget(text: str) -> Dict[str, Any]:
     return result
 
 
-def extract_skills_from_text(text: str, skill_keywords: List[str]) -> List[str]:
+def extract_skills_from_text(text: str, skill_keywords: list[str]) -> list[str]:
     """Extract matching skills from text."""
     if not text:
         return []
@@ -332,7 +332,7 @@ def extract_skills_from_text(text: str, skill_keywords: List[str]) -> List[str]:
     return matched
 
 
-def categorize_job(title: str, description: str, categories: Dict[str, List[str]]) -> Tuple[str, str]:
+def categorize_job(title: str, description: str, categories: dict[str, list[str]]) -> tuple[str, str]:
     """Categorize job based on title and description."""
     text = f"{title} {description}".lower()
     
@@ -354,7 +354,7 @@ def categorize_job(title: str, description: str, categories: Dict[str, List[str]
     return best_category, best_subcategory
 
 
-def estimate_difficulty(title: str, description: str, required_skills: List[str]) -> str:
+def estimate_difficulty(title: str, description: str, required_skills: list[str]) -> str:
     """Estimate job difficulty level."""
     text = f"{title} {description}".lower()
     
@@ -385,7 +385,7 @@ def estimate_difficulty(title: str, description: str, required_skills: List[str]
         return "medium"
 
 
-def estimate_effort(title: str, description: str, budget_info: Dict, duration: str) -> str:
+def estimate_effort(title: str, description: str, budget_info: dict, duration: str) -> str:
     """Estimate effort required."""
     text = f"{title} {description}".lower()
     
@@ -437,7 +437,7 @@ def truncate_text(text: str, max_length: int = 500, suffix: str = "...") -> str:
     return text[:max_length - len(suffix)].rsplit(' ', 1)[0] + suffix
 
 
-def is_likely_spam(title: str, description: str, client_info: Dict = None) -> Tuple[bool, List[str]]:
+def is_likely_spam(title: str, description: str, client_info: dict = None) -> tuple[bool, list[str]]:
     """Check if job listing appears to be spam."""
     reasons = []
     text = f"{title} {description}".lower()
@@ -497,7 +497,7 @@ def validate_job_url(url: str, platform: str) -> bool:
     return bool(parsed.path and len(parsed.path) > 1)
 
 
-def load_json_file(filepath: str) -> Dict[str, Any]:
+def load_json_file(filepath: str) -> dict[str, Any]:
     """Load JSON file safely."""
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
@@ -507,7 +507,7 @@ def load_json_file(filepath: str) -> Dict[str, Any]:
         return {}
 
 
-def save_json_file(data: Dict[str, Any], filepath: str):
+def save_json_file(data: dict[str, Any], filepath: str):
     """Save JSON file safely."""
     try:
         with open(filepath, 'w', encoding='utf-8') as f:

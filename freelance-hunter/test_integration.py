@@ -1,12 +1,11 @@
 """Integration test for the Freelance Hunter system."""
 import asyncio
 import os
-from core.config.loader import get_config
-from core.database.models import init_database
-from core.database.repository import DatabaseManager, Repositories
+
 from agents.orchestrator import FreelanceHunterOrchestrator
-from core.utils import parse_date
-from datetime import datetime
+from core.database.models import init_database
+from core.database.repository import DatabaseManager
+
 
 async def test_orchestrator():
     """Test the orchestrator with mocked components."""

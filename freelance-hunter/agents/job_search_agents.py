@@ -3,21 +3,24 @@ Specialized Job Search Agents for different categories.
 """
 import asyncio
 import logging
-import re
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional, Set
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from urllib.parse import urljoin, quote_plus
+from datetime import datetime
+from typing import Any
 
-from .base import BaseAgent, AgentResult
-from core.utils import (
-    normalize_url, extract_domain, parse_date, extract_budget,
-    categorize_job, estimate_difficulty, estimate_effort,
-    extract_skills_from_text, clean_text, generate_job_id,
-    validate_job_url, is_likely_spam
-)
 from core.config.loader import get_config
+from core.utils import (
+    categorize_job,
+    estimate_difficulty,
+    estimate_effort,
+    extract_budget,
+    extract_skills_from_text,
+    generate_job_id,
+    is_likely_spam,
+    validate_job_url,
+)
+
+from .base import AgentResult, BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -31,32 +34,32 @@ class JobListing:
     title: str
     full_description: str
     short_summary: str = ""
-    date_posted: Optional[datetime] = None
+    date_posted: datetime | None = None
     time_since_posted: str = ""
-    deadline: Optional[datetime] = None
+    deadline: datetime | None = None
     estimated_duration: str = ""
     budget: str = ""
-    budget_min: Optional[float] = None
-    budget_max: Optional[float] = None
+    budget_min: float | None = None
+    budget_max: float | None = None
     currency: str = "USD"
     fixed_price_or_hourly: str = "not_specified"
     experience_level: str = ""
-    required_skills: List[str] = field(default_factory=list)
-    proposals_count: Optional[int] = None
-    hires_count: Optional[int] = None
-    bids_count: Optional[int] = None
+    required_skills: list[str] = field(default_factory=list)
+    proposals_count: int | None = None
+    hires_count: int | None = None
+    bids_count: int | None = None
     client_name: str = ""
     client_profile_url: str = ""
     client_country: str = ""
     client_timezone: str = ""
-    client_rating: Optional[float] = None
-    client_review_count: Optional[int] = None
-    client_hire_history: Optional[int] = None
-    client_total_spent: Optional[float] = None
+    client_rating: float | None = None
+    client_review_count: int | None = None
+    client_hire_history: int | None = None
+    client_total_spent: float | None = None
     client_payment_status: str = ""
-    attachments: List[str] = field(default_factory=list)
-    required_files: List[str] = field(default_factory=list)
-    required_output: List[str] = field(default_factory=list)
+    attachments: list[str] = field(default_factory=list)
+    required_files: list[str] = field(default_factory=list)
+    required_output: list[str] = field(default_factory=list)
     contact_method: str = ""
     remote_allowed: bool = True
     location_requirement: str = ""
@@ -64,13 +67,13 @@ class JobListing:
     source_agent: str = ""
     pages_scanned: int = 0
     results_scanned: int = 0
-    raw_data: Dict[str, Any] = field(default_factory=dict)
+    raw_data: dict[str, Any] = field(default_factory=dict)
 
 
 class BaseJobSearchAgent(BaseAgent, ABC):
     """Base class for specialized job search agents."""
     
-    def __init__(self, name: str, category: str, keywords: List[str], config: Dict[str, Any] = None, db_manager=None):
+    def __init__(self, name: str, category: str, keywords: list[str], config: dict[str, Any] = None, db_manager=None):
         super().__init__(name, config, db_manager)
         self.category = category
         self.keywords = keywords
@@ -83,16 +86,14 @@ class BaseJobSearchAgent(BaseAgent, ABC):
         self.time_windows = self.search_config.get("time_windows", {})
     
     @abstractmethod
-    async def search_platform(self, platform: Dict[str, Any], query: str, page: int = 1) -> List[JobListing]:
+    async def search_platform(self, platform: dict[str, Any], query: str, page: int = 1) -> list[JobListing]:
         """Search a specific platform for jobs."""
-        pass
     
     @abstractmethod
-    def parse_job_listing(self, raw_data: Dict[str, Any], platform: Dict[str, Any]) -> Optional[JobListing]:
+    def parse_job_listing(self, raw_data: dict[str, Any], platform: dict[str, Any]) -> JobListing | None:
         """Parse raw platform data into JobListing."""
-        pass
     
-    def generate_search_queries(self) -> List[str]:
+    def generate_search_queries(self) -> list[str]:
         """Generate search queries for this agent's category."""
         queries = []
         
@@ -124,9 +125,8 @@ class BaseJobSearchAgent(BaseAgent, ABC):
         return unique_queries[:50]  # Limit total queries
     
     @abstractmethod
-    def get_category_queries(self) -> List[str]:
+    def get_category_queries(self) -> list[str]:
         """Get category-specific search queries."""
-        pass
     
     def filter_by_recency(self, job: JobListing, priority: int = 1) -> bool:
         """Filter job by recency based on priority level."""
@@ -193,9 +193,8 @@ class BaseJobSearchAgent(BaseAgent, ABC):
         return job
     
     @abstractmethod
-    def get_category_keywords(self) -> Dict[str, List[str]]:
+    def get_category_keywords(self) -> dict[str, list[str]]:
         """Get category keywords for categorization."""
-        pass
     
     async def execute(self, **kwargs) -> AgentResult:
         """Execute job search across platforms."""
@@ -278,7 +277,7 @@ class BaseJobSearchAgent(BaseAgent, ABC):
             metadata={"errors": errors}
         )
     
-    def _job_to_dict(self, job: JobListing) -> Dict[str, Any]:
+    def _job_to_dict(self, job: JobListing) -> dict[str, Any]:
         """Convert JobListing to dictionary for storage."""
         return {
             "job_id": job.raw_data.get("job_id"),
@@ -333,7 +332,7 @@ class BaseJobSearchAgent(BaseAgent, ABC):
 class DataEntryJobAgent(BaseJobSearchAgent):
     """Agent for finding data entry jobs."""
     
-    def __init__(self, config: Dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] = None, db_manager=None):
         keywords = [
             "data entry", "data entry specialist", "excel data entry",
             "google sheets data entry", "copy paste", "copy typing",
@@ -347,7 +346,7 @@ class DataEntryJobAgent(BaseJobSearchAgent):
         ]
         super().__init__("data_entry_agent", "data_entry", keywords, config, db_manager)
     
-    def get_category_queries(self) -> List[str]:
+    def get_category_queries(self) -> list[str]:
         return [
             "data entry freelance jobs",
             "excel data entry remote",
@@ -366,7 +365,7 @@ class DataEntryJobAgent(BaseJobSearchAgent):
             "database data entry work"
         ]
     
-    def get_category_keywords(self) -> Dict[str, List[str]]:
+    def get_category_keywords(self) -> dict[str, list[str]]:
         return {
             "data_entry": [
                 "data entry", "copy typing", "copy paste", "data input",
@@ -390,14 +389,14 @@ class DataEntryJobAgent(BaseJobSearchAgent):
             ]
         }
     
-    async def search_platform(self, platform: Dict[str, Any], query: str, page: int = 1) -> List[JobListing]:
+    async def search_platform(self, platform: dict[str, Any], query: str, page: int = 1) -> list[JobListing]:
         """Search platform for data entry jobs."""
         # This would be implemented with actual platform-specific scrapers
         # For now, return empty list - real implementation would use scrapers
         self.logger.debug(f"Searching {platform['name']} for: {query} (page {page})")
         return []
     
-    def parse_job_listing(self, raw_data: Dict[str, Any], platform: Dict[str, Any]) -> Optional[JobListing]:
+    def parse_job_listing(self, raw_data: dict[str, Any], platform: dict[str, Any]) -> JobListing | None:
         """Parse raw data into JobListing."""
         # Platform-specific parsing would go here
         return None
@@ -406,7 +405,7 @@ class DataEntryJobAgent(BaseJobSearchAgent):
 class DocumentPdfWordAgent(BaseJobSearchAgent):
     """Agent for finding document/PDF/Word jobs."""
     
-    def __init__(self, config: Dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] = None, db_manager=None):
         keywords = [
             "pdf to word", "pdf conversion", "pdf formatting", "word formatting",
             "document formatting", "ocr", "scanned document", "typing pdf",
@@ -416,7 +415,7 @@ class DocumentPdfWordAgent(BaseJobSearchAgent):
         ]
         super().__init__("document_pdf_word_agent", "document_pdf_word", keywords, config, db_manager)
     
-    def get_category_queries(self) -> List[str]:
+    def get_category_queries(self) -> list[str]:
         return [
             "pdf to word freelance",
             "pdf conversion jobs",
@@ -434,7 +433,7 @@ class DocumentPdfWordAgent(BaseJobSearchAgent):
             "file format conversion freelance"
         ]
     
-    def get_category_keywords(self) -> Dict[str, List[str]]:
+    def get_category_keywords(self) -> dict[str, list[str]]:
         return {
             "pdf": ["pdf", "pdf conversion", "pdf formatting", "pdf to word", "pdf to excel"],
             "word": ["word", "microsoft word", "docx", "doc", "word formatting"],
@@ -444,18 +443,18 @@ class DocumentPdfWordAgent(BaseJobSearchAgent):
             "typing": ["typing", "transcription", "copy typing", "data entry"]
         }
     
-    async def search_platform(self, platform: Dict[str, Any], query: str, page: int = 1) -> List[JobListing]:
+    async def search_platform(self, platform: dict[str, Any], query: str, page: int = 1) -> list[JobListing]:
         self.logger.debug(f"Searching {platform['name']} for: {query} (page {page})")
         return []
     
-    def parse_job_listing(self, raw_data: Dict[str, Any], platform: Dict[str, Any]) -> Optional[JobListing]:
+    def parse_job_listing(self, raw_data: dict[str, Any], platform: dict[str, Any]) -> JobListing | None:
         return None
 
 
 class PowerPointPresentationAgent(BaseJobSearchAgent):
     """Agent for finding PowerPoint/presentation jobs."""
     
-    def __init__(self, config: Dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] = None, db_manager=None):
         keywords = [
             "powerpoint", "powerpoint presentation", "powerpoint formatting",
             "presentation design", "presentation redesign", "slide formatting",
@@ -466,7 +465,7 @@ class PowerPointPresentationAgent(BaseJobSearchAgent):
         ]
         super().__init__("powerpoint_presentation_agent", "powerpoint_presentation", keywords, config, db_manager)
     
-    def get_category_queries(self) -> List[str]:
+    def get_category_queries(self) -> list[str]:
         return [
             "powerpoint presentation design freelance",
             "presentation formatting jobs",
@@ -484,7 +483,7 @@ class PowerPointPresentationAgent(BaseJobSearchAgent):
             "sales presentation design"
         ]
     
-    def get_category_keywords(self) -> Dict[str, List[str]]:
+    def get_category_keywords(self) -> dict[str, list[str]]:
         return {
             "powerpoint": ["powerpoint", "ppt", "pptx", "microsoft powerpoint"],
             "design": ["design", "presentation design", "slide design", "visual design"],
@@ -495,18 +494,18 @@ class PowerPointPresentationAgent(BaseJobSearchAgent):
             "keynote": ["keynote", "apple keynote"]
         }
     
-    async def search_platform(self, platform: Dict[str, Any], query: str, page: int = 1) -> List[JobListing]:
+    async def search_platform(self, platform: dict[str, Any], query: str, page: int = 1) -> list[JobListing]:
         self.logger.debug(f"Searching {platform['name']} for: {query} (page {page})")
         return []
     
-    def parse_job_listing(self, raw_data: Dict[str, Any], platform: Dict[str, Any]) -> Optional[JobListing]:
+    def parse_job_listing(self, raw_data: dict[str, Any], platform: dict[str, Any]) -> JobListing | None:
         return None
 
 
 class ExcelSpreadsheetAgent(BaseJobSearchAgent):
     """Agent for finding Excel/spreadsheet jobs."""
     
-    def __init__(self, config: Dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] = None, db_manager=None):
         keywords = [
             "excel", "microsoft excel", "google sheets", "spreadsheet",
             "spreadsheet formatting", "spreadsheet cleanup", "excel formulas",
@@ -517,7 +516,7 @@ class ExcelSpreadsheetAgent(BaseJobSearchAgent):
         ]
         super().__init__("excel_spreadsheet_agent", "excel_spreadsheet", keywords, config, db_manager)
     
-    def get_category_queries(self) -> List[str]:
+    def get_category_queries(self) -> list[str]:
         return [
             "excel freelance jobs",
             "google sheets freelance",
@@ -535,7 +534,7 @@ class ExcelSpreadsheetAgent(BaseJobSearchAgent):
             "microsoft excel expert needed"
         ]
     
-    def get_category_keywords(self) -> Dict[str, List[str]]:
+    def get_category_keywords(self) -> dict[str, list[str]]:
         return {
             "excel": ["excel", "microsoft excel", "xlsx", "xls", "excel formulas"],
             "google_sheets": ["google sheets", "sheets", "gsheets"],
@@ -545,18 +544,18 @@ class ExcelSpreadsheetAgent(BaseJobSearchAgent):
             "automation": ["automation", "macros", "vba", "scripts", "power query"]
         }
     
-    async def search_platform(self, platform: Dict[str, Any], query: str, page: int = 1) -> List[JobListing]:
+    async def search_platform(self, platform: dict[str, Any], query: str, page: int = 1) -> list[JobListing]:
         self.logger.debug(f"Searching {platform['name']} for: {query} (page {page})")
         return []
     
-    def parse_job_listing(self, raw_data: Dict[str, Any], platform: Dict[str, Any]) -> Optional[JobListing]:
+    def parse_job_listing(self, raw_data: dict[str, Any], platform: dict[str, Any]) -> JobListing | None:
         return None
 
 
 class GeneralFreelanceAgent(BaseJobSearchAgent):
     """Agent for finding general easy-entry freelance work."""
     
-    def __init__(self, config: Dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] = None, db_manager=None):
         keywords = [
             "virtual assistant", "web research", "copy paste", "data collection",
             "administrative tasks", "product listing", "file conversion",
@@ -568,7 +567,7 @@ class GeneralFreelanceAgent(BaseJobSearchAgent):
         ]
         super().__init__("general_freelance_agent", "general_freelance", keywords, config, db_manager)
     
-    def get_category_queries(self) -> List[str]:
+    def get_category_queries(self) -> list[str]:
         return [
             "virtual assistant jobs remote",
             "web research freelance",
@@ -587,7 +586,7 @@ class GeneralFreelanceAgent(BaseJobSearchAgent):
             "online researcher needed"
         ]
     
-    def get_category_keywords(self) -> Dict[str, List[str]]:
+    def get_category_keywords(self) -> dict[str, list[str]]:
         return {
             "virtual_assistant": ["virtual assistant", "va", "remote assistant", "online assistant"],
             "research": ["research", "web research", "internet research", "market research"],
@@ -598,18 +597,18 @@ class GeneralFreelanceAgent(BaseJobSearchAgent):
             "listing": ["product listing", "catalog", "ecommerce listing", "data listing"]
         }
     
-    async def search_platform(self, platform: Dict[str, Any], query: str, page: int = 1) -> List[JobListing]:
+    async def search_platform(self, platform: dict[str, Any], query: str, page: int = 1) -> list[JobListing]:
         self.logger.debug(f"Searching {platform['name']} for: {query} (page {page})")
         return []
     
-    def parse_job_listing(self, raw_data: Dict[str, Any], platform: Dict[str, Any]) -> Optional[JobListing]:
+    def parse_job_listing(self, raw_data: dict[str, Any], platform: dict[str, Any]) -> JobListing | None:
         return None
 
 
 class SearchEngineAgent(BaseAgent):
     """Agent that searches search engines for job listings."""
     
-    def __init__(self, config: Dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] = None, db_manager=None):
         super().__init__("search_engine_agent", config, db_manager)
         self.config = config or get_config()._config
         self.search_engines = self.config.get("search", {}).get("search_engines", ["google", "bing", "duckduckgo"])
@@ -626,7 +625,7 @@ class SearchEngineAgent(BaseAgent):
             "linkedin": "site:linkedin.com/jobs"
         }
     
-    def generate_search_queries(self, category: str = "all") -> List[str]:
+    def generate_search_queries(self, category: str = "all") -> list[str]:
         """Generate search engine queries for job discovery."""
         base_queries = [
             '"PowerPoint presentation" freelance job',
@@ -695,7 +694,7 @@ class SearchEngineAgent(BaseAgent):
 
 
 # Factory function to create all specialized agents
-def create_specialized_agents(config: Dict[str, Any] = None, db_manager=None) -> List[BaseJobSearchAgent]:
+def create_specialized_agents(config: dict[str, Any] = None, db_manager=None) -> list[BaseJobSearchAgent]:
     """Create all specialized job search agents."""
     agents = [
         DataEntryJobAgent(config, db_manager),

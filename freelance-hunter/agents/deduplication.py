@@ -2,17 +2,16 @@
 Deduplication Agent - Detects and removes duplicate job listings.
 """
 import logging
-from typing import Dict, Any, List, Optional, Tuple, Set
 from dataclasses import dataclass
 from datetime import datetime
-from collections import defaultdict
+from typing import Any
 
-from .base import BaseAgent, AgentResult
-from core.utils import (
-    normalize_url, calculate_similarity, is_duplicate_job,
-    generate_job_id
-)
 from core.config.loader import get_config
+from core.utils import (
+    is_duplicate_job,
+)
+
+from .base import AgentResult, BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -20,16 +19,16 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DuplicateGroup:
     """Group of duplicate jobs."""
-    canonical_job: Dict[str, Any]
-    duplicates: List[Dict[str, Any]]
-    similarity_scores: List[float]
-    reasons: List[str]
+    canonical_job: dict[str, Any]
+    duplicates: list[dict[str, Any]]
+    similarity_scores: list[float]
+    reasons: list[str]
 
 
 class DeduplicationAgent(BaseAgent):
     """Agent that detects and handles duplicate job listings."""
     
-    def __init__(self, config: Dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] = None, db_manager=None):
         super().__init__("deduplication_agent", config, db_manager)
         self.config = config or get_config()._config
         self.dedup_config = self.config.get("deduplication", {})
@@ -89,7 +88,7 @@ class DeduplicationAgent(BaseAgent):
             }
         )
     
-    def _find_duplicates(self, jobs: List[Dict[str, Any]]) -> List[DuplicateGroup]:
+    def _find_duplicates(self, jobs: list[dict[str, Any]]) -> list[DuplicateGroup]:
         """Find duplicate groups among jobs."""
         groups = []
         processed = set()
@@ -126,7 +125,7 @@ class DeduplicationAgent(BaseAgent):
         
         return groups
     
-    def _select_canonical(self, group: DuplicateGroup) -> Dict[str, Any]:
+    def _select_canonical(self, group: DuplicateGroup) -> dict[str, Any]:
         """Select the best job from a duplicate group as canonical."""
         candidates = [group.canonical_job] + group.duplicates
         
@@ -156,7 +155,7 @@ class DeduplicationAgent(BaseAgent):
         
         return canonical
     
-    def _score_job_completeness(self, job: Dict[str, Any]) -> float:
+    def _score_job_completeness(self, job: dict[str, Any]) -> float:
         """Score job based on completeness and quality."""
         score = 0.0
         
@@ -219,7 +218,7 @@ class DeduplicationAgent(BaseAgent):
         
         return score
     
-    def _merge_job_info(self, canonical: Dict[str, Any], duplicate: Dict[str, Any]) -> Dict[str, Any]:
+    def _merge_job_info(self, canonical: dict[str, Any], duplicate: dict[str, Any]) -> dict[str, Any]:
         """Merge information from duplicate into canonical."""
         # Fields where we want the most complete information
         merge_fields = [
@@ -271,7 +270,7 @@ class DeduplicationAgent(BaseAgent):
         
         return canonical
     
-    async def _record_duplicates(self, canonical: Dict[str, Any], duplicates: List[Dict[str, Any]]):
+    async def _record_duplicates(self, canonical: dict[str, Any], duplicates: list[dict[str, Any]]):
         """Record duplicate relationships in database."""
         if not self.db_manager:
             return
@@ -312,8 +311,8 @@ class DeduplicationService:
         self.db_manager = db_manager
         self.agent = DeduplicationAgent(db_manager=db_manager)
     
-    async def deduplicate(self, jobs: List[Dict[str, Any]], 
-                          existing_jobs: List[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    async def deduplicate(self, jobs: list[dict[str, Any]], 
+                          existing_jobs: list[dict[str, Any]] = None) -> list[dict[str, Any]]:
         """Deduplicate jobs against each other and existing jobs."""
         existing = existing_jobs or []
         
@@ -328,7 +327,7 @@ class DeduplicationService:
             return result.data["canonical_jobs"]
         return jobs
     
-    def _job_to_dict(self, job) -> Dict[str, Any]:
+    def _job_to_dict(self, job) -> dict[str, Any]:
         """Convert Job model to dictionary."""
         return {
             "job_id": job.job_id,

@@ -1,23 +1,24 @@
 """
 FastAPI Backend for Freelance Hunter Dashboard.
 """
-import os
 import asyncio
 import logging
-from datetime import datetime
-from typing import Dict, Any, List, Optional
+import os
 from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query, BackgroundTasks
+from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from core.config.loader import get_config as get_config_sync, reload_config
-from core.database.models import init_database, get_session, JobStatus
-from core.database.repository import Repositories, DatabaseManager
 from agents.orchestrator import FreelanceHunterOrchestrator, run_pipeline
+from core.config.loader import get_config as get_config_sync
+from core.config.loader import reload_config
+from core.database.models import JobStatus, init_database
+from core.database.repository import DatabaseManager
 from core.notifications.email_service import get_email_service
 
 # Setup logging
@@ -25,9 +26,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Global instances
-db_manager: Optional[DatabaseManager] = None
-orchestrator: Optional[FreelanceHunterOrchestrator] = None
-pipeline_task: Optional[asyncio.Task] = None
+db_manager: DatabaseManager | None = None
+orchestrator: FreelanceHunterOrchestrator | None = None
+pipeline_task: asyncio.Task | None = None
 
 
 @asynccontextmanager
@@ -85,7 +86,7 @@ class ScanRequest(BaseModel):
 
 class SchedulerControl(BaseModel):
     action: str  # "start", "stop", "pause", "resume"
-    interval_hours: Optional[int] = None
+    interval_hours: int | None = None
 
 
 class EmailSettings(BaseModel):
@@ -107,25 +108,25 @@ class EmailNotificationSettings(BaseModel):
 
 
 class TestEmailRequest(BaseModel):
-    email: Optional[str] = None
+    email: str | None = None
 
 
 class JobFilters(BaseModel):
-    platform_id: Optional[int] = None
-    category: Optional[str] = None
-    match_level: Optional[str] = None
-    verification_status: Optional[str] = None
-    risk_level: Optional[str] = None
-    status: Optional[str] = None
-    min_score: Optional[float] = None
-    max_score: Optional[float] = None
-    date_from: Optional[str] = None
-    date_to: Optional[str] = None
-    min_budget: Optional[float] = None
-    max_budget: Optional[float] = None
-    currency: Optional[str] = None
-    experience_level: Optional[str] = None
-    keyword: Optional[str] = None
+    platform_id: int | None = None
+    category: str | None = None
+    match_level: str | None = None
+    verification_status: str | None = None
+    risk_level: str | None = None
+    status: str | None = None
+    min_score: float | None = None
+    max_score: float | None = None
+    date_from: str | None = None
+    date_to: str | None = None
+    min_budget: float | None = None
+    max_budget: float | None = None
+    currency: str | None = None
+    experience_level: str | None = None
+    keyword: str | None = None
     sort_by: str = "score"
     sort_order: str = "desc"
     page: int = 1
@@ -135,12 +136,12 @@ class JobFilters(BaseModel):
 class JobStatusUpdate(BaseModel):
     job_id: str
     new_status: str
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class ExportRequest(BaseModel):
     format: str = "csv"
-    filters: Optional[Dict[str, Any]] = None
+    filters: dict[str, Any] | None = None
 
 
 # Routes
@@ -172,21 +173,21 @@ async def get_stats():
 
 @app.get("/api/jobs")
 async def get_jobs(
-    platform_id: Optional[int] = None,
-    category: Optional[str] = None,
-    match_level: Optional[str] = None,
-    verification_status: Optional[str] = None,
-    risk_level: Optional[str] = None,
-    status: Optional[str] = None,
-    min_score: Optional[float] = None,
-    max_score: Optional[float] = None,
-    date_from: Optional[str] = None,
-    date_to: Optional[str] = None,
-    min_budget: Optional[float] = None,
-    max_budget: Optional[float] = None,
-    currency: Optional[str] = None,
-    experience_level: Optional[str] = None,
-    keyword: Optional[str] = None,
+    platform_id: int | None = None,
+    category: str | None = None,
+    match_level: str | None = None,
+    verification_status: str | None = None,
+    risk_level: str | None = None,
+    status: str | None = None,
+    min_score: float | None = None,
+    max_score: float | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    min_budget: float | None = None,
+    max_budget: float | None = None,
+    currency: str | None = None,
+    experience_level: str | None = None,
+    keyword: str | None = None,
     sort_by: str = "score",
     sort_order: str = "desc",
     page: int = 1,
@@ -441,7 +442,6 @@ async def update_notification_settings(settings: EmailNotificationSettings):
 @app.post("/api/email/test")
 async def send_test_email(request: TestEmailRequest):
     """Send a test email to verify configuration."""
-    from core.notifications.email_service import get_email_service
     
     email_service = get_email_service()
     email = request.email or get_config_sync().email_notifications.get("email")

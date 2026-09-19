@@ -5,14 +5,13 @@ import csv
 import json
 import logging
 from datetime import datetime
-from typing import Dict, Any, List, Optional
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 from jinja2 import Template
 
 from core.config.loader import get_config
-from core.utils import format_time_ago
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ class ExportManager:
             "discovered_at", "verification_status", "status"
         ]
     
-    def export_jobs(self, jobs: List[Dict[str, Any]], format: str = "csv", 
+    def export_jobs(self, jobs: list[dict[str, Any]], format: str = "csv", 
                     filename: str = None) -> str:
         """Export jobs to specified format."""
         if not jobs:
@@ -64,7 +63,7 @@ class ExportManager:
             logger.error(f"Export failed: {e}")
             raise
     
-    def _export_csv(self, jobs: List[Dict[str, Any]], filepath: Path) -> str:
+    def _export_csv(self, jobs: list[dict[str, Any]], filepath: Path) -> str:
         """Export to CSV."""
         # Prepare rows
         rows = []
@@ -81,7 +80,7 @@ class ExportManager:
         logger.info(f"Exported {len(jobs)} jobs to CSV: {filepath}")
         return str(filepath)
     
-    def _export_excel(self, jobs: List[Dict[str, Any]], filepath: Path) -> str:
+    def _export_excel(self, jobs: list[dict[str, Any]], filepath: Path) -> str:
         """Export to Excel with formatting."""
         rows = []
         for job in jobs:
@@ -104,15 +103,14 @@ class ExportManager:
                 column_letter = column[0].column_letter
                 for cell in column:
                     try:
-                        if len(str(cell.value)) > max_length:
-                            max_length = len(str(cell.value))
+                        max_length = max(max_length, len(str(cell.value)))
                     except:
                         pass
                 adjusted_width = min(max_length + 2, 50)
                 worksheet.column_dimensions[column_letter].width = adjusted_width
             
             # Add header formatting
-            from openpyxl.styles import Font, PatternFill, Alignment
+            from openpyxl.styles import Alignment, Font, PatternFill
             header_font = Font(bold=True, color="FFFFFF")
             header_fill = PatternFill(start_color="2F5496", end_color="2F5496", fill_type="solid")
             header_alignment = Alignment(horizontal="center", wrap_text=True)
@@ -131,7 +129,7 @@ class ExportManager:
         logger.info(f"Exported {len(jobs)} jobs to Excel: {filepath}")
         return str(filepath)
     
-    def _export_json(self, jobs: List[Dict[str, Any]], filepath: Path) -> str:
+    def _export_json(self, jobs: list[dict[str, Any]], filepath: Path) -> str:
         """Export to JSON."""
         export_data = {
             "exported_at": datetime.utcnow().isoformat(),
@@ -145,7 +143,7 @@ class ExportManager:
         logger.info(f"Exported {len(jobs)} jobs to JSON: {filepath}")
         return str(filepath)
     
-    def _export_markdown(self, jobs: List[Dict[str, Any]], filepath: Path) -> str:
+    def _export_markdown(self, jobs: list[dict[str, Any]], filepath: Path) -> str:
         """Export to Markdown."""
         lines = []
         lines.append("# Freelance Job Opportunities")
@@ -180,7 +178,7 @@ class ExportManager:
                 lines.append("")
                 lines.append(f"**Why it matches:** {job.get('match_reason', 'N/A')}")
                 lines.append("")
-                lines.append(f"**Proposal:**")
+                lines.append("**Proposal:**")
                 lines.append(f"> {job.get('proposal_normal', 'N/A')[:500]}...")
                 lines.append("")
                 lines.append(f"**Link:** [{job.get('job_url', '#')}]({job.get('job_url', '#')})")
@@ -194,7 +192,7 @@ class ExportManager:
         logger.info(f"Exported {len(jobs)} jobs to Markdown: {filepath}")
         return str(filepath)
     
-    def _export_html(self, jobs: List[Dict[str, Any]], filepath: Path) -> str:
+    def _export_html(self, jobs: list[dict[str, Any]], filepath: Path) -> str:
         """Export to HTML."""
         html_template = Template("""
 <!DOCTYPE html>
@@ -344,7 +342,7 @@ class ExportManager:
         logger.info(f"Exported {len(jobs)} jobs to HTML: {filepath}")
         return str(filepath)
     
-    def _job_to_row(self, job: Dict[str, Any]) -> Dict[str, Any]:
+    def _job_to_row(self, job: dict[str, Any]) -> dict[str, Any]:
         """Convert job dict to export row."""
         # Format date
         date_posted = job.get("date_posted")
@@ -396,7 +394,7 @@ class ExportManager:
 
 
 # Convenience function
-def export_jobs(jobs: List[Dict[str, Any]], format: str = "csv", 
+def export_jobs(jobs: list[dict[str, Any]], format: str = "csv", 
                 output_dir: str = None, filename: str = None) -> str:
     """Export jobs to file."""
     manager = ExportManager(output_dir)

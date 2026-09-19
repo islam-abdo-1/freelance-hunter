@@ -4,14 +4,22 @@ Supports both SQLite and PostgreSQL.
 """
 from datetime import datetime
 from enum import Enum
-from typing import Optional, List
+
 from sqlalchemy import (
-    Column, Integer, String, Text, DateTime, Float, Boolean,
-    ForeignKey, Index, JSON, Enum as SQLEnum, UniqueConstraint
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
 )
-from sqlalchemy.orm import relationship, declarative_base
-from sqlalchemy.dialects.postgresql import UUID
-import uuid
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 

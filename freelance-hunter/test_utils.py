@@ -1,5 +1,14 @@
-from core.utils import generate_job_id, normalize_url, extract_domain, calculate_similarity, is_duplicate_job, parse_date, extract_budget
 from datetime import datetime
+
+from core.utils import (
+    calculate_similarity,
+    extract_budget,
+    extract_domain,
+    generate_job_id,
+    is_duplicate_job,
+    normalize_url,
+    parse_date,
+)
 
 # Test generate_job_id
 id1 = generate_job_id('upwork', 'https://upwork.com/jobs/123', 'Data Entry Job')

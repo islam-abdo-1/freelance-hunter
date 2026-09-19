@@ -3,15 +3,14 @@ Platform Discovery Agent - Discovers legitimate freelance platforms and job boar
 """
 import asyncio
 import logging
-import re
-from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
-from urllib.parse import urljoin, urlparse
+from typing import Any
 
-from .base import BaseAgent, AgentResult
-from core.utils import normalize_url, extract_domain, load_json_file, save_json_file
 from core.config.loader import get_config
 from core.database.repository import Repositories
+from core.utils import load_json_file, save_json_file
+
+from .base import AgentResult, BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -260,10 +259,10 @@ class PlatformDiscoveryAgent(BaseAgent):
         "latin america freelance sites"
     ]
     
-    def __init__(self, config: Dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] = None, db_manager=None):
         super().__init__("platform_discovery", config, db_manager)
         self.config = config or get_config()._config
-        self.discovered_platforms: List[PlatformInfo] = []
+        self.discovered_platforms: list[PlatformInfo] = []
         self.platforms_file = "data/discovered_platforms.json"
         self._repositories = Repositories(db_manager) if db_manager else None
     
@@ -318,7 +317,7 @@ class PlatformDiscoveryAgent(BaseAgent):
         self.logger.info(f"Registered {count} known platforms")
         return count
     
-    async def _discover_new_platforms(self, max_new: int) -> List[PlatformInfo]:
+    async def _discover_new_platforms(self, max_new: int) -> list[PlatformInfo]:
         """Discover new platforms using search engines."""
         new_platforms = []
         
@@ -339,14 +338,14 @@ class PlatformDiscoveryAgent(BaseAgent):
         
         return new_platforms
     
-    async def _search_with_aisa(self, max_results: int) -> List[PlatformInfo]:
+    async def _search_with_aisa(self, max_results: int) -> list[PlatformInfo]:
         """Use AIsa to search for new platforms."""
         # This would use AIsa's search capabilities
         # For now, return empty list - implementation depends on AIsa API
         self.logger.info("AIsa search for new platforms not yet implemented")
         return []
     
-    def _get_additional_platforms(self) -> List[PlatformInfo]:
+    def _get_additional_platforms(self) -> list[PlatformInfo]:
         """Get additional known platforms not in main list."""
         additional = [
             PlatformInfo(
@@ -501,7 +500,7 @@ class PlatformDiscoveryAgent(BaseAgent):
         for p_data in data.get("platforms", []):
             self.discovered_platforms.append(PlatformInfo(**p_data))
     
-    def get_all_platforms(self) -> List[Dict[str, Any]]:
+    def get_all_platforms(self) -> list[dict[str, Any]]:
         """Get all platforms (known + discovered)."""
         all_platforms = []
         
@@ -513,7 +512,7 @@ class PlatformDiscoveryAgent(BaseAgent):
         
         return all_platforms
     
-    def get_active_platforms(self) -> List[Dict[str, Any]]:
+    def get_active_platforms(self) -> list[dict[str, Any]]:
         """Get platforms that have job listings and are active."""
         return [p for p in self.get_all_platforms() if True]
 
@@ -524,7 +523,7 @@ class PlatformValidator:
     def __init__(self):
         self.logger = logging.getLogger("platform_validator")
     
-    async def validate_platform(self, platform: Dict[str, Any]) -> Dict[str, Any]:
+    async def validate_platform(self, platform: dict[str, Any]) -> dict[str, Any]:
         """Validate a single platform."""
         result = platform.copy()
         result["validation"] = {
@@ -540,7 +539,7 @@ class PlatformValidator:
         # For now, return the platform with validation structure
         return result
     
-    async def validate_multiple(self, platforms: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def validate_multiple(self, platforms: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Validate multiple platforms concurrently."""
         tasks = [self.validate_platform(p) for p in platforms]
         return await asyncio.gather(*tasks)

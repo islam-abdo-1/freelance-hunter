@@ -1,20 +1,32 @@
 """
 Database manager and repository classes for Freelance Hunter.
 """
+import logging
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any, Generator
+from typing import Any
+
+from sqlalchemy import asc, desc, func, or_
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_, desc, asc
-from sqlalchemy.exc import IntegrityError
-import json
-import logging
 
 from .models import (
-    Base, Platform, Client, Job, JobMatch, JobStatusHistory,
-    JobDuplicate, SearchRun, Agent, Proposal, RedFlag, ExportJob,
-    MatchLevel, VerificationStatus, RiskLevel, JobStatus,
-    get_engine, get_session, init_database
+    Agent,
+    Base,
+    Client,
+    ExportJob,
+    Job,
+    JobMatch,
+    JobStatus,
+    JobStatusHistory,
+    MatchLevel,
+    Platform,
+    Proposal,
+    RedFlag,
+    RiskLevel,
+    SearchRun,
+    VerificationStatus,
+    get_engine,
 )
 
 logger = logging.getLogger(__name__)
@@ -58,7 +70,7 @@ class PlatformRepository:
     def __init__(self, db_manager: DatabaseManager):
         self.db = db_manager
     
-    def create_or_update(self, platform_data: Dict[str, Any]) -> Platform:
+    def create_or_update(self, platform_data: dict[str, Any]) -> Platform:
         """Create or update a platform."""
         with self.db.session() as session:
             platform = session.query(Platform).filter_by(name=platform_data['name']).first()
@@ -79,14 +91,14 @@ class PlatformRepository:
             # Return a simple object with the data
             return type('PlatformRef', (), {'id': platform_id, 'name': platform_name})()
     
-    def get_by_name(self, name: str) -> Optional[Platform]:
+    def get_by_name(self, name: str) -> Platform | None:
         with self.db.session() as session:
             platform = session.query(Platform).filter_by(name=name).first()
             if platform:
                 session.expunge(platform)
             return platform
     
-    def get_active_platforms(self) -> List[Platform]:
+    def get_active_platforms(self) -> list[Platform]:
         with self.db.session() as session:
             platforms = session.query(Platform).filter_by(is_active=True).all()
             for p in platforms:
@@ -109,7 +121,7 @@ class ClientRepository:
     def __init__(self, db_manager: DatabaseManager):
         self.db = db_manager
     
-    def create_or_update(self, client_data: Dict[str, Any]) -> Client:
+    def create_or_update(self, client_data: dict[str, Any]) -> Client:
         with self.db.session() as session:
             platform_id = client_data['platform_id']
             platform_client_id = client_data.get('platform_client_id')
@@ -135,7 +147,7 @@ class ClientRepository:
             session.expunge(client)
             return type('ClientRef', (), {'id': client_id, 'display_name': client_name})()
     
-    def get_by_platform_and_id(self, platform_id: int, platform_client_id: str) -> Optional[Client]:
+    def get_by_platform_and_id(self, platform_id: int, platform_client_id: str) -> Client | None:
         with self.db.session() as session:
             client = session.query(Client).filter_by(
                 platform_id=platform_id,
@@ -152,7 +164,7 @@ class JobRepository:
     def __init__(self, db_manager: DatabaseManager):
         self.db = db_manager
     
-    def create(self, job_data: Dict[str, Any]) -> Job:
+    def create(self, job_data: dict[str, Any]) -> Job:
         with self.db.session() as session:
             job = Job(**job_data)
             session.add(job)
@@ -162,35 +174,35 @@ class JobRepository:
             session.expunge(job)
             return type('JobRef', (), {'id': job_id, 'job_id': job_job_id})()
     
-    def get_by_id(self, job_id: int) -> Optional[Job]:
+    def get_by_id(self, job_id: int) -> Job | None:
         with self.db.session() as session:
             job = session.query(Job).get(job_id)
             if job:
                 session.expunge(job)
             return job
     
-    def get_by_job_id(self, job_id: str) -> Optional[Job]:
+    def get_by_job_id(self, job_id: str) -> Job | None:
         with self.db.session() as session:
             job = session.query(Job).filter_by(job_id=job_id).first()
             if job:
                 session.expunge(job)
             return job
     
-    def get_by_url(self, job_url: str) -> Optional[Job]:
+    def get_by_url(self, job_url: str) -> Job | None:
         with self.db.session() as session:
             job = session.query(Job).filter_by(job_url=job_url).first()
             if job:
                 session.expunge(job)
             return job
     
-    def get_by_canonical_url(self, canonical_url: str) -> Optional[Job]:
+    def get_by_canonical_url(self, canonical_url: str) -> Job | None:
         with self.db.session() as session:
             job = session.query(Job).filter_by(canonical_url=canonical_url).first()
             if job:
                 session.expunge(job)
             return job
     
-    def update(self, job_id: int, updates: Dict[str, Any]) -> Optional[Job]:
+    def update(self, job_id: int, updates: dict[str, Any]) -> Job | None:
         with self.db.session() as session:
             job = session.query(Job).get(job_id)
             if job:
@@ -221,7 +233,7 @@ class JobRepository:
                 session.flush()
             return job
     
-    def search_jobs(self, filters: Dict[str, Any], page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+    def search_jobs(self, filters: dict[str, Any], page: int = 1, per_page: int = 20) -> dict[str, Any]:
         with self.db.session() as session:
             query = session.query(Job)
             
@@ -292,7 +304,7 @@ class JobRepository:
                 'total_pages': (total + per_page - 1) // per_page
             }
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         with self.db.session() as session:
             total = session.query(func.count(Job.id)).scalar()
             verified = session.query(func.count(Job.id)).filter(
@@ -323,7 +335,7 @@ class JobRepository:
                 'platform_breakdown': {name: count for name, count in platform_stats}
             }
     
-    def get_recent_jobs(self, hours: int = 24, limit: int = 50) -> List[Job]:
+    def get_recent_jobs(self, hours: int = 24, limit: int = 50) -> list[Job]:
         with self.db.session() as session:
             cutoff = datetime.utcnow() - timedelta(hours=hours)
             jobs = session.query(Job).filter(
@@ -342,7 +354,7 @@ class SearchRunRepository:
     def __init__(self, db_manager: DatabaseManager):
         self.db = db_manager
     
-    def create(self, run_data: Dict[str, Any]) -> SearchRun:
+    def create(self, run_data: dict[str, Any]) -> SearchRun:
         with self.db.session() as session:
             run = SearchRun(**run_data)
             session.add(run)
@@ -351,7 +363,7 @@ class SearchRunRepository:
             session.expunge(run)
             return type('SearchRunRef', (), {'run_id': run_id})()
     
-    def update(self, run_id: str, updates: Dict[str, Any]) -> Optional[SearchRun]:
+    def update(self, run_id: str, updates: dict[str, Any]) -> SearchRun | None:
         with self.db.session() as session:
             run = session.query(SearchRun).filter_by(run_id=run_id).first()
             if run:
@@ -361,7 +373,7 @@ class SearchRunRepository:
                 session.flush()
             return run
     
-    def get_latest(self, limit: int = 10) -> List[SearchRun]:
+    def get_latest(self, limit: int = 10) -> list[SearchRun]:
         with self.db.session() as session:
             runs = session.query(SearchRun).order_by(desc(SearchRun.started_at)).limit(limit).all()
             for r in runs:
@@ -375,7 +387,7 @@ class AgentRepository:
     def __init__(self, db_manager: DatabaseManager):
         self.db = db_manager
     
-    def create_or_update(self, agent_data: Dict[str, Any]) -> Agent:
+    def create_or_update(self, agent_data: dict[str, Any]) -> Agent:
         with self.db.session() as session:
             agent = session.query(Agent).filter_by(name=agent_data['name']).first()
             if agent:
@@ -392,7 +404,7 @@ class AgentRepository:
             session.expunge(agent)
             return type('AgentRef', (), {'id': agent_id, 'name': agent_name})()
     
-    def get_active_agents(self) -> List[Agent]:
+    def get_active_agents(self) -> list[Agent]:
         with self.db.session() as session:
             agents = session.query(Agent).filter_by(is_active=True).all()
             for a in agents:
@@ -406,7 +418,7 @@ class ProposalRepository:
     def __init__(self, db_manager: DatabaseManager):
         self.db = db_manager
     
-    def create(self, proposal_data: Dict[str, Any]) -> Proposal:
+    def create(self, proposal_data: dict[str, Any]) -> Proposal:
         with self.db.session() as session:
             proposal = Proposal(**proposal_data)
             session.add(proposal)
@@ -415,7 +427,7 @@ class ProposalRepository:
             session.expunge(proposal)
             return type('ProposalRef', (), {'id': proposal_id})()
     
-    def get_by_job(self, job_id: int) -> List[Proposal]:
+    def get_by_job(self, job_id: int) -> list[Proposal]:
         with self.db.session() as session:
             proposals = session.query(Proposal).filter_by(job_id=job_id).all()
             for p in proposals:
@@ -429,7 +441,7 @@ class RedFlagRepository:
     def __init__(self, db_manager: DatabaseManager):
         self.db = db_manager
     
-    def create(self, flag_data: Dict[str, Any]) -> RedFlag:
+    def create(self, flag_data: dict[str, Any]) -> RedFlag:
         with self.db.session() as session:
             flag = RedFlag(**flag_data)
             session.add(flag)
@@ -438,7 +450,7 @@ class RedFlagRepository:
             session.expunge(flag)
             return type('RedFlagRef', (), {'id': flag_id})()
     
-    def get_by_job(self, job_id: int) -> List[RedFlag]:
+    def get_by_job(self, job_id: int) -> list[RedFlag]:
         with self.db.session() as session:
             flags = session.query(RedFlag).filter_by(job_id=job_id).all()
             for f in flags:
@@ -452,14 +464,14 @@ class JobMatchRepository:
     def __init__(self, db_manager: DatabaseManager):
         self.db = db_manager
     
-    def create_matches(self, job_id: int, matches: List[Dict[str, Any]]):
+    def create_matches(self, job_id: int, matches: list[dict[str, Any]]):
         with self.db.session() as session:
             for match in matches:
                 match['job_id'] = job_id
                 job_match = JobMatch(**match)
                 session.add(job_match)
     
-    def get_by_job(self, job_id: int) -> List[JobMatch]:
+    def get_by_job(self, job_id: int) -> list[JobMatch]:
         with self.db.session() as session:
             matches = session.query(JobMatch).filter_by(job_id=job_id).all()
             for m in matches:
@@ -473,7 +485,7 @@ class ExportJobRepository:
     def __init__(self, db_manager: DatabaseManager):
         self.db = db_manager
     
-    def create(self, export_data: Dict[str, Any]) -> ExportJob:
+    def create(self, export_data: dict[str, Any]) -> ExportJob:
         with self.db.session() as session:
             export = ExportJob(**export_data)
             session.add(export)
@@ -482,7 +494,7 @@ class ExportJobRepository:
             session.expunge(export)
             return type('ExportJobRef', (), {'export_id': export_id})()
     
-    def update(self, export_id: str, updates: Dict[str, Any]) -> Optional[ExportJob]:
+    def update(self, export_id: str, updates: dict[str, Any]) -> ExportJob | None:
         with self.db.session() as session:
             export = session.query(ExportJob).filter_by(export_id=export_id).first()
             if export:

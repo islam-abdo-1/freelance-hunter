@@ -1,21 +1,35 @@
 """
 Test suite for Freelance Hunter.
 """
-import pytest
-import asyncio
 from datetime import datetime, timedelta
-from typing import Dict, Any, List
 
-from core.utils import (
-    generate_job_id, normalize_url, extract_domain, calculate_similarity,
-    is_duplicate_job, parse_date, extract_budget, extract_skills_from_text,
-    categorize_job, estimate_difficulty, estimate_effort, clean_text,
-    truncate_text, is_likely_spam, validate_job_url, format_time_ago
-)
+import pytest
+
 from core.database.models import (
-    Platform, Client, Job, JobMatch, JobStatusHistory,
-    JobDuplicate, SearchRun, Agent, Proposal, RedFlag, ExportJob,
-    MatchLevel, VerificationStatus, RiskLevel, JobStatus
+    Job,
+    JobStatus,
+    MatchLevel,
+    Platform,
+    RiskLevel,
+    VerificationStatus,
+)
+from core.utils import (
+    calculate_similarity,
+    categorize_job,
+    clean_text,
+    estimate_difficulty,
+    estimate_effort,
+    extract_budget,
+    extract_domain,
+    extract_skills_from_text,
+    format_time_ago,
+    generate_job_id,
+    is_duplicate_job,
+    is_likely_spam,
+    normalize_url,
+    parse_date,
+    truncate_text,
+    validate_job_url,
 )
 
 
@@ -469,7 +483,6 @@ class TestIntegration:
         # This would test the full pipeline with mocked external calls
         # For now, just verify imports work
         from agents.orchestrator import FreelanceHunterOrchestrator
-        from core.database.repository import DatabaseManager
         
         # Verify classes can be instantiated
         orchestrator = FreelanceHunterOrchestrator()

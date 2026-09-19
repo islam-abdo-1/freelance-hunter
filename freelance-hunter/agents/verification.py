@@ -1,20 +1,16 @@
 """
 Verification Agent - Verifies job listings for authenticity and completeness.
 """
-import asyncio
 import logging
-import re
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
 from urllib.parse import urlparse
 
-from .base import BaseAgent, AgentResult
-from core.utils import (
-    parse_date, extract_budget, clean_text, validate_job_url,
-    is_likely_spam, normalize_url
-)
 from core.config.loader import get_config
+from core.utils import extract_budget, is_likely_spam, parse_date, validate_job_url
+
+from .base import AgentResult, BaseAgent
 
 logger = logging.getLogger(__name__)
 
@@ -25,18 +21,18 @@ class VerificationResult:
     job_id: str
     is_verified: bool
     verification_status: str  # VERIFIED, PARTIALLY_VERIFIED, UNVERIFIED, FAILED
-    checks_passed: List[str]
-    checks_failed: List[str]
-    missing_fields: List[str]
-    warnings: List[str]
+    checks_passed: list[str]
+    checks_failed: list[str]
+    missing_fields: list[str]
+    warnings: list[str]
     verified_at: datetime
-    verified_fields: Dict[str, Any]
+    verified_fields: dict[str, Any]
 
 
 class VerificationAgent(BaseAgent):
     """Agent that verifies job listings."""
     
-    def __init__(self, config: Dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] = None, db_manager=None):
         super().__init__("verification_agent", config, db_manager)
         self.config = config or get_config()._config
         self.verification_config = self.config.get("verification", {})
@@ -100,7 +96,7 @@ class VerificationAgent(BaseAgent):
             items_processed=verified_count + partially_verified
         )
     
-    async def _verify_job(self, job: Dict[str, Any]) -> VerificationResult:
+    async def _verify_job(self, job: dict[str, Any]) -> VerificationResult:
         """Verify a single job listing."""
         job_id = job.get("job_id") or job.get("id", "unknown")
         checks_passed = []
@@ -263,7 +259,7 @@ class VerificationAgent(BaseAgent):
         
         return any(d in domain for d in known_domains)
     
-    def _check_if_expired(self, job: Dict[str, Any]) -> bool:
+    def _check_if_expired(self, job: dict[str, Any]) -> bool:
         """Check if job appears to be expired or closed."""
         # Check explicit status
         status = job.get("status", "").lower()
@@ -295,7 +291,7 @@ class VerificationAgent(BaseAgent):
         
         return False
     
-    def _check_is_real_job(self, job: Dict[str, Any]) -> bool:
+    def _check_is_real_job(self, job: dict[str, Any]) -> bool:
         """Check if listing is a real job posting (not freelancer profile)."""
         title = job.get("title", "").lower()
         description = job.get("full_description", "").lower()
@@ -327,7 +323,7 @@ class VerificationAgent(BaseAgent):
         
         return job_score > profile_score
     
-    def _create_skipped_result(self, job: Dict[str, Any]) -> VerificationResult:
+    def _create_skipped_result(self, job: dict[str, Any]) -> VerificationResult:
         """Create result for skipped (already verified) job."""
         return VerificationResult(
             job_id=job.get("job_id", "unknown"),
@@ -341,7 +337,7 @@ class VerificationAgent(BaseAgent):
             verified_fields={}
         )
     
-    def _result_to_dict(self, result: VerificationResult) -> Dict[str, Any]:
+    def _result_to_dict(self, result: VerificationResult) -> dict[str, Any]:
         """Convert VerificationResult to dictionary."""
         return {
             "job_id": result.job_id,
@@ -363,7 +359,7 @@ class VerificationService:
         self.db_manager = db_manager
         self.agent = VerificationAgent(db_manager=db_manager)
     
-    async def verify_jobs(self, jobs: List[Dict[str, Any]], force: bool = False) -> List[Dict[str, Any]]:
+    async def verify_jobs(self, jobs: list[dict[str, Any]], force: bool = False) -> list[dict[str, Any]]:
         """Verify a list of jobs and update database."""
         result = await self.agent.run(jobs=jobs, force_reverify=force)
         

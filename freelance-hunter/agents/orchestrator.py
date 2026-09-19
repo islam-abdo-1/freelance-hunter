@@ -1,24 +1,23 @@
 """
 Orchestrator Agent - Coordinates the entire freelance job hunting pipeline.
 """
-import asyncio
 import logging
 import uuid
-from typing import Dict, Any, List, Optional
+from dataclasses import dataclass
 from datetime import datetime
-from dataclasses import dataclass, field
+from typing import Any
 
-from .base import BaseAgent, AgentResult, AgentOrchestrator
-from .platform_discovery import PlatformDiscoveryAgent
-from .job_search_agents import create_specialized_agents, SearchEngineAgent
-from .verification import VerificationAgent, VerificationService
-from .deduplication import DeduplicationAgent, DeduplicationService
-from .matching import JobMatchingAgent, MatchingService
-from .proposal import ProposalAgent, ProposalService
-from .risk_detection import RiskDetectionAgent, RiskDetectionService
 from core.config.loader import get_config
-from core.database.repository import Repositories, DatabaseManager
-from core.database.models import SearchRun, JobStatus
+from core.database.repository import Repositories
+
+from .base import AgentOrchestrator, AgentResult
+from .deduplication import DeduplicationService
+from .job_search_agents import SearchEngineAgent, create_specialized_agents
+from .matching import MatchingService
+from .platform_discovery import PlatformDiscoveryAgent
+from .proposal import ProposalService
+from .risk_detection import RiskDetectionService
+from .verification import VerificationService
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,7 @@ class PipelineResult:
     """Result of the complete pipeline run."""
     run_id: str
     started_at: datetime
-    completed_at: Optional[datetime]
+    completed_at: datetime | None
     status: str
     platforms_discovered: int
     platforms_scanned: int
@@ -40,14 +39,14 @@ class PipelineResult:
     verified_jobs: int
     relevant_jobs: int
     high_match_jobs: int
-    errors: List[str]
+    errors: list[str]
     duration_seconds: float
 
 
 class FreelanceHunterOrchestrator:
     """Main orchestrator for the freelance job hunting system."""
     
-    def __init__(self, db_manager=None, config: Dict[str, Any] = None):
+    def __init__(self, db_manager=None, config: dict[str, Any] = None):
         self.db_manager = db_manager
         self.config = config or get_config()._config
         self.repositories = Repositories(db_manager) if db_manager else None
@@ -203,7 +202,7 @@ class FreelanceHunterOrchestrator:
             max_new_platforms=self.config.get("agents", {}).get("platform_discovery", {}).get("max_new_platforms_per_run", 5)
         )
     
-    def _generate_all_queries(self) -> List[str]:
+    def _generate_all_queries(self) -> list[str]:
         """Generate all search queries from all agents."""
         all_queries = set()
         
@@ -218,7 +217,7 @@ class FreelanceHunterOrchestrator:
         
         return list(all_queries)[:200]  # Limit total queries
     
-    async def _run_search_agents(self, platforms: List[Dict], queries: List[str], **kwargs) -> Dict[str, AgentResult]:
+    async def _run_search_agents(self, platforms: list[dict], queries: list[str], **kwargs) -> dict[str, AgentResult]:
         """Run all search agents in parallel."""
         # Filter active platforms with job listings
         active_platforms = [p for p in platforms if p.get("has_job_listings", True)]
@@ -251,7 +250,7 @@ class FreelanceHunterOrchestrator:
         
         return await self.agent_orchestrator.run_agents_parallel(agent_names, **kwargs.get("agent_kwargs", {}))
     
-    def _collect_jobs_from_results(self, results: Dict[str, AgentResult]) -> List[Dict[str, Any]]:
+    def _collect_jobs_from_results(self, results: dict[str, AgentResult]) -> list[dict[str, Any]]:
         """Collect jobs from all search agent results."""
         all_jobs = []
         
@@ -266,7 +265,7 @@ class FreelanceHunterOrchestrator:
         return all_jobs
     
     def _calculate_stats(self, platform_result, search_results, unique_jobs, 
-                         verified_jobs, matched_jobs, risk_assessed_jobs) -> Dict[str, int]:
+                         verified_jobs, matched_jobs, risk_assessed_jobs) -> dict[str, int]:
         """Calculate pipeline statistics."""
         platforms_scanned = 0
         queries_executed = 0
@@ -301,7 +300,7 @@ class FreelanceHunterOrchestrator:
             "high_match_jobs": high_match
         }
     
-    async def _save_jobs(self, jobs: List[Dict[str, Any]]):
+    async def _save_jobs(self, jobs: list[dict[str, Any]]):
         """Save final jobs to database."""
         for job_data in jobs:
             try:
@@ -331,14 +330,14 @@ class FreelanceHunterOrchestrator:
             priority=1  # High priority for recent jobs
         )
     
-    def get_dashboard_stats(self) -> Dict[str, Any]:
+    def get_dashboard_stats(self) -> dict[str, Any]:
         """Get dashboard statistics."""
         if not self.repositories:
             return {}
         
         return self.repositories.jobs.get_stats()
     
-    def get_recent_jobs(self, hours: int = 24, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_recent_jobs(self, hours: int = 24, limit: int = 50) -> list[dict[str, Any]]:
         """Get recent jobs for dashboard."""
         if not self.repositories:
             return []
@@ -346,7 +345,7 @@ class FreelanceHunterOrchestrator:
         jobs = self.repositories.jobs.get_recent_jobs(hours=hours, limit=limit)
         return [self._job_to_dict(j) for j in jobs]
     
-    def _job_to_dict(self, job) -> Dict[str, Any]:
+    def _job_to_dict(self, job) -> dict[str, Any]:
         """Convert Job model to dictionary."""
         return {
             "id": job.id,
@@ -390,14 +389,14 @@ class FreelanceHunterOrchestrator:
             "discovered_at": job.discovered_at.isoformat() if job.discovered_at else None
         }
     
-    def search_jobs(self, filters: Dict[str, Any], page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+    def search_jobs(self, filters: dict[str, Any], page: int = 1, per_page: int = 20) -> dict[str, Any]:
         """Search jobs with filters."""
         if not self.repositories:
             return {"jobs": [], "total": 0, "page": page, "per_page": per_page, "total_pages": 0}
         
         return self.repositories.jobs.search_jobs(filters, page, per_page)
     
-    def export_jobs(self, format: str = "csv", filters: Dict[str, Any] = None) -> str:
+    def export_jobs(self, format: str = "csv", filters: dict[str, Any] = None) -> str:
         """Export jobs to file."""
         # This would be implemented with actual export logic
         return f"exports/jobs_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.{format}"
@@ -454,7 +453,7 @@ class FreelanceHunterOrchestrator:
 
 
 # Convenience function for running pipeline
-async def run_pipeline(db_manager=None, config: Dict[str, Any] = None, **kwargs) -> PipelineResult:
+async def run_pipeline(db_manager=None, config: dict[str, Any] = None, **kwargs) -> PipelineResult:
     """Run the full pipeline."""
     orchestrator = FreelanceHunterOrchestrator(db_manager=db_manager, config=config)
     return await orchestrator.run_full_pipeline(**kwargs)

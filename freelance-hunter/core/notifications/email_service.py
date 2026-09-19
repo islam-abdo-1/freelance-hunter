@@ -6,11 +6,11 @@ import asyncio
 import logging
 import smtplib
 import ssl
+from dataclasses import dataclass
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass
+from typing import Any
 
 from core.config.loader import get_config
 
@@ -28,7 +28,7 @@ class EmailTemplate:
 class EmailService:
     """Handles sending email notifications."""
     
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] = None):
         self.config = config or get_config().email_config
         self.enabled = self.config.get("enabled", False)
         self.smtp_host = self.config.get("smtp_host", "smtp.gmail.com")
@@ -89,7 +89,7 @@ class EmailService:
     
     # ===== Templates =====
     
-    def _scan_complete_template(self, stats: Dict[str, Any], top_jobs: List[Dict[str, Any]] = None) -> EmailTemplate:
+    def _scan_complete_template(self, stats: dict[str, Any], top_jobs: list[dict[str, Any]] = None) -> EmailTemplate:
         """Template for scan completion notification."""
         top_jobs = top_jobs or []
         
@@ -191,7 +191,7 @@ class EmailService:
             text_body=text
         )
     
-    def _high_match_alert_template(self, job: Dict[str, Any]) -> EmailTemplate:
+    def _high_match_alert_template(self, job: dict[str, Any]) -> EmailTemplate:
         """Template for high match job alert."""
         html = f"""
         <!DOCTYPE html>
@@ -252,7 +252,7 @@ class EmailService:
     
     # ===== Public Methods =====
     
-    async def send_scan_complete(self, stats: Dict[str, Any], top_jobs: List[Dict[str, Any]] = None, 
+    async def send_scan_complete(self, stats: dict[str, Any], top_jobs: list[dict[str, Any]] = None, 
                                   email: str = None) -> bool:
         """Send scan completion notification."""
         email = email or get_config().email_notifications.get("email")
@@ -269,7 +269,7 @@ class EmailService:
         template = self._scan_complete_template(stats, top_jobs)
         return await self.send_email_async(email, template.subject, template.html_body, template.text_body)
     
-    async def send_high_match_alert(self, job: Dict[str, Any], email: str = None) -> bool:
+    async def send_high_match_alert(self, job: dict[str, Any], email: str = None) -> bool:
         """Send high match job alert."""
         email = email or get_config().email_notifications.get("email")
         if not email:
@@ -314,7 +314,7 @@ class EmailService:
 
 
 # Global instance
-_email_service: Optional[EmailService] = None
+_email_service: EmailService | None = None
 
 
 def get_email_service() -> EmailService:

@@ -5,10 +5,10 @@ import asyncio
 import logging
 import time
 from abc import ABC, abstractmethod
-from datetime import datetime
-from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class AgentResult:
     success: bool
     data: Any = None
     error: str = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     execution_time: float = 0.0
     items_found: int = 0
     items_processed: int = 0
@@ -36,19 +36,18 @@ class AgentResult:
 class BaseAgent(ABC):
     """Base class for all agents."""
     
-    def __init__(self, name: str, config: Dict[str, Any] = None, db_manager=None):
+    def __init__(self, name: str, config: dict[str, Any] = None, db_manager=None):
         self.name = name
         self.config = config or {}
         self.db_manager = db_manager
         self.status = AgentStatus.IDLE
         self.logger = logging.getLogger(f"agent.{name}")
-        self._start_time: Optional[float] = None
-        self._results: List[AgentResult] = []
+        self._start_time: float | None = None
+        self._results: list[AgentResult] = []
     
     @abstractmethod
     async def execute(self, **kwargs) -> AgentResult:
         """Execute the agent's main task."""
-        pass
     
     async def run(self, **kwargs) -> AgentResult:
         """Run the agent with timing and error handling."""
@@ -89,11 +88,11 @@ class BaseAgent(ABC):
             self._results.append(result)
             return result
     
-    def get_last_result(self) -> Optional[AgentResult]:
+    def get_last_result(self) -> AgentResult | None:
         """Get the last execution result."""
         return self._results[-1] if self._results else None
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get agent statistics."""
         total_runs = len(self._results)
         successful_runs = sum(1 for r in self._results if r.success)
@@ -121,19 +120,19 @@ class BaseAgent(ABC):
 class AgentOrchestrator:
     """Orchestrates multiple agents."""
     
-    def __init__(self, config: Dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] = None, db_manager=None):
         self.config = config or {}
         self.db_manager = db_manager
-        self.agents: Dict[str, BaseAgent] = {}
+        self.agents: dict[str, BaseAgent] = {}
         self.logger = logging.getLogger("orchestrator")
-        self.execution_history: List[Dict[str, Any]] = []
+        self.execution_history: list[dict[str, Any]] = []
     
     def register_agent(self, agent: BaseAgent):
         """Register an agent."""
         self.agents[agent.name] = agent
         self.logger.info(f"Registered agent: {agent.name}")
     
-    def get_agent(self, name: str) -> Optional[BaseAgent]:
+    def get_agent(self, name: str) -> BaseAgent | None:
         """Get agent by name."""
         return self.agents.get(name)
     
@@ -157,7 +156,7 @@ class AgentOrchestrator:
         
         return result
     
-    async def run_agents_parallel(self, agent_names: List[str], **kwargs) -> Dict[str, AgentResult]:
+    async def run_agents_parallel(self, agent_names: list[str], **kwargs) -> dict[str, AgentResult]:
         """Run multiple agents in parallel."""
         tasks = {}
         for name in agent_names:
@@ -188,7 +187,7 @@ class AgentOrchestrator:
         
         return results
     
-    async def run_agents_sequential(self, agent_names: List[str], **kwargs) -> Dict[str, AgentResult]:
+    async def run_agents_sequential(self, agent_names: list[str], **kwargs) -> dict[str, AgentResult]:
         """Run multiple agents sequentially."""
         results = {}
         for name in agent_names:
@@ -202,10 +201,10 @@ class AgentOrchestrator:
         
         return results
     
-    def get_all_stats(self) -> Dict[str, Any]:
+    def get_all_stats(self) -> dict[str, Any]:
         """Get statistics for all agents."""
         return {name: agent.get_stats() for name, agent in self.agents.items()}
     
-    def get_execution_history(self, limit: int = 100) -> List[Dict[str, Any]]:
+    def get_execution_history(self, limit: int = 100) -> list[dict[str, Any]]:
         """Get execution history."""
         return self.execution_history[-limit:]
