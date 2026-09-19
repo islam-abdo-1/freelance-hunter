@@ -1,0 +1,106 @@
+database:
+  type: "sqlite"
+  path: "data/freelance_jobs.db"
+  pool_size: 5
+
+search:
+  default_time_windows:
+    priority_1_hours: 24
+    priority_2_hours: 72
+    priority_3_days: 7
+    priority_4_days: 30
+  
+  max_pages_per_platform: 5
+  max_results_per_query: 50
+  request_delay_seconds: 2
+  timeout_seconds: 30
+  
+  search_engines:
+    - "google"
+    - "bing"
+    - "duckduckgo"
+  
+  platforms:
+    known:
+      - "upwork.com"
+      - "freelancer.com"
+      - "peopleperhour.com"
+      - "guru.com"
+      - "workana.com"
+      - "contra.com"
+      - "khamsat.com"
+      - "mostaql.com"
+      - "linkedin.com"
+      - "fiverr.com"
+
+agents:
+  platform_discovery:
+    enabled: true
+    max_new_platforms_per_run: 10
+  
+  job_search:
+    parallel_workers: 4
+    queries_per_category: 20
+  
+  verification:
+    enabled: true
+    max_retries: 3
+    timeout_seconds: 15
+  
+  deduplication:
+    similarity_threshold: 0.85
+    check_fields: ["url", "title", "description", "client", "platform", "posted_date"]
+  
+  matching:
+    min_score_threshold: 30
+    weights:
+      skill_match: 30
+      recency: 20
+      beginner_accessibility: 15
+      budget_value: 10
+      client_quality: 10
+      competition: 5
+      clarity: 5
+      ease_of_delivery: 5
+  
+  risk_detection:
+    enabled: true
+    risk_levels: ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+  
+  proposal_generation:
+    enabled: true
+    styles: ["short", "normal", "ultra_short"]
+
+scheduler:
+  enabled: true
+  intervals:
+    - "1h"
+    - "3h"
+    - "6h"
+    - "12h"
+    - "24h"
+  default_interval: "6h"
+  max_concurrent_runs: 1
+
+exports:
+  formats: ["csv", "excel", "json", "markdown", "html"]
+  output_dir: "exports"
+  include_proposals: true
+
+dashboard:
+  host: "0.0.0.0"
+  port: 8000
+  auto_refresh_seconds: 30
+
+logging:
+  level: "INFO"
+  file: "logs/freelance_hunter.log"
+  max_size_mb: 10
+  backup_count: 5
+
+scraping:
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  respect_robots_txt: true
+  max_concurrent_requests: 3
+  retry_attempts: 3
+  retry_backoff_factor: 2
