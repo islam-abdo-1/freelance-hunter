@@ -87,3 +87,5 @@ tmp/
 # OS
 ehthumbs.db
 Desktop.ini
+.vercel
+.env*
