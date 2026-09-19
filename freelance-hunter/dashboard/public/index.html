@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freelance Hunter Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #f5f5f5; 
+            min-height: 100vh;
+        }
+        .header {
+            background: #1a1a2e;
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header h1 { font-size: 1.5rem; font-weight: 600; }
+        .header-actions { display: flex; gap: 10px; }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary { background: #2F5496; color: white; }
+        .btn-primary:hover { background: #1e3d6e; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background: #d0d0d0; }
+        .btn-success { background: #2e7d32; color: white; }
+        .btn-success:hover { background: #1b5e20; }
+        .btn-danger { background: #c62828; color: white; }
+        .btn-danger:hover { background: #b71c1c; }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px; }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid #2F5496;
+        }
+        .stat-card.warning { border-left-color: #ef6c00; }
+        .stat-card.danger { border-left-color: #c62828; }
+        .stat-card.success { border-left-color: #2e7d32; }
+        .stat-label { font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: #1a1a2e; margin-top: 5px; }
+        
+        /* Filters */
+        .filters-bar {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+        .filter-group { display: flex; flex-direction: column; gap: 5px; }
+        .filter-group label { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+        .filter-group select, .filter-group input {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            min-width: 150px;
+        }
+        
+        /* Jobs Table */
+        .jobs-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .table-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .table-header h2 { font-size: 1.1rem; font-weight: 600; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px 20px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #fafafa; font-weight: 600; font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+        tr:hover { background: #fafafa; }
+        
+        .job-title { font-weight: 600; color: #1a1a2e; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .job-platform { font-size: 0.8rem; color: #666; }
+        
+        .badge { 
+            padding: 4px 10px; 
+            border-radius: 12px; 
+            font-size: 0.7rem; 
+            font-weight: 600; 
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .badge-excellent { background: #e8f5e9; color: #2e7d32; }
+        .badge-good { background: #e3f2fd; color: #1565c0; }
+        .badge-possible { background: #fff3e0; color: #ef6c00; }
+        .badge-weak { background: #fce4ec; color: #c2185b; }
+        .badge-not-relevant { background: #f5f5f5; color: #757575; }
+        .badge-low { background: #e8f5e9; color: #2e7d32; }
+        .badge-medium { background: #fff3e0; color: #ef6c00; }
+        .badge-high { background: #ffebee; color: #c62828; }
+        .badge-critical { background: #fce4ec; color: #c2185b; }
+        .badge-verified { background: #e8f5e9; color: #2e7d32; }
+        .badge-partially { background: #fff3e0; color: #ef6c00; }
+        .badge-unverified { background: #ffebee; color: #c62828; }
+        
+        .score { font-weight: 600; }
+        .score-high { color: #2e7d32; }
+        .score-medium { color: #ef6c00; }
+        .score-low { color: #c62828; }
+        
+        .action-buttons { display: flex; gap: 8px; }
+        .action-btn { padding: 6px 12px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; border: none; }
+        
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state svg { width: 64px; height: 64px; margin-bottom: 15px; opacity: 0.5; }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal {
+            background: white; border-radius: 12px; padding: 30px;
+            max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto;
+            transform: scale(0.9); transition: transform 0.3s;
+        }
+        .modal-overlay.active .modal { transform: scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+        .modal-title { font-size: 1.2rem; font-weight: 600; }
+        .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
+        .modal-section { margin-bottom: 20px; }
+        .modal-section-title { font-size: 0.85rem; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 10px; }
+        .modal-field { display: flex; gap: 15px; margin-bottom: 8px; }
+        .modal-field-label { font-weight: 500; color: #333; min-width: 150px; }
+        .modal-field-value { color: #666; flex: 1; }
+        .proposal-box { background: #f5f5f5; padding: 15px; border-radius: 8px; font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; }
+        
+        /* Loading */
+        .loading { display: flex; align-items: center; justify-content: center; padding: 40px; }
+        .spinner { width: 32px; height: 32px; border: 3px solid #e0e0e0; border-top-color: #2F5496; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Pagination */
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 20px; }
+        .pagination button { padding: 8px 16px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination-info { color: #666; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🎯 Freelance Hunter</h1>
+        <div class="header-actions">
+            <button class="btn btn-success" onclick="runScan()">▶ Run Scan</button>
+            <button class="btn btn-primary" onclick="generateReport()">📊 Daily Report</button>
+            <button class="btn btn-secondary" onclick="exportJobs()">📥 Export</button>
+            <button class="btn btn-secondary" onclick="refreshStats()">🔄 Refresh</button>
+        </div>
+    </header>
+    
+    <div class="container">
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-label">Total Jobs</div>
+                <div class="stat-value" id="statTotal">-</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-label">Verified</div>
+                <div class="stat-value" id="statVerified">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">New Today</div>
+                <div class="stat-value" id="statNew">-</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-label">High Match</div>
+                <div class="stat-value" id="statHighMatch">-</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-label">High Risk</div>
+                <div class="stat-value" id="statHighRisk">-</div>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="filters-bar">
+            <div class="filter-group">
+                <label>Platform</label>
+                <select id="filterPlatform" onchange="loadJobs()">
+                    <option value="">All Platforms</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Category</label>
+                <select id="filterCategory" onchange="loadJobs()">
+                    <option value="">All Categories</option>
+                    <option value="data_entry">Data Entry</option>
+                    <option value="document_pdf_word">Document/PDF/Word</option>
+                    <option value="powerpoint_presentation">PowerPoint/Presentation</option>
+                    <option value="excel_spreadsheet">Excel/Spreadsheet</option>
+                    <option value="general_freelance">General Freelance</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Match Level</label>
+                <select id="filterMatchLevel" onchange="loadJobs()">
+                    <option value="">All Levels</option>
+                    <option value="EXCELLENT_MATCH">Excellent</option>
+                    <option value="GOOD_MATCH">Good</option>
+                    <option value="POSSIBLE_MATCH">Possible</option>
+                    <option value="WEAK_MATCH">Weak</option>
+                    <option value="NOT_RELEVANT">Not Relevant</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Verification</label>
+                <select id="filterVerification" onchange="loadJobs()">
+                    <option value="">All</option>
+                    <option value="VERIFIED">Verified</option>
+                    <option value="PARTIALLY_VERIFIED">Partially</option>
+                    <option value="UNVERIFIED">Unverified</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Risk Level</label>
+                <select id="filterRisk" onchange="loadJobs()">
+                    <option value="">All Risks</option>
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="CRITICAL">Critical</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Min Score</label>
+                <input type="number" id="filterMinScore" placeholder="0-100" min="0" max="100" onchange="loadJobs()">
+            </div>
+            <div class="filter-group">
+                <label>Keyword</label>
+                <input type="text" id="filterKeyword" placeholder="Search..." onkeypress="if(event.key==='Enter') loadJobs()">
+            </div>
+            <div class="filter-group">
+                <button class="btn btn-primary" onclick="loadJobs()">Apply Filters</button>
+            </div>
+        </div>
+        
+        <!-- Jobs Table -->
+        <div class="jobs-container">
+            <div class="table-header">
+                <h2>Job Opportunities</h2>
+                <div class="pagination-info" id="paginationInfo">Loading...</div>
+            </div>
+            <table id="jobsTable">
+                <thead>
+                    <tr>
+                        <th style="width: 30%">Title</th>
+                        <th style="width: 10%">Platform</th>
+                        <th style="width: 10%">Posted</th>
+                        <th style="width: 10%">Budget</th>
+                        <th style="width: 10%">Match</th>
+                        <th style="width: 8%">Risk</th>
+                        <th style="width: 10%">Verification</th>
+                        <th style="width: 12%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="jobsBody">
+                    <tr><td colspan="8" class="loading"><div class="spinner"></div></td></tr>
+                </tbody>
+            </table>
+            <div class="pagination">
+                <button id="prevPage" onclick="changePage(-1)" disabled>← Previous</button>
+                <span class="pagination-info" id="pageInfo">Page 1</span>
+                <button id="nextPage" onclick="changePage(1)" disabled>Next →</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Job Detail Modal -->
+    <div class="modal-overlay" id="jobModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Job Details</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+    
+    <script>
+        // State
+        let currentPage = 1;
+        const perPage = 20;
+        let currentFilters = {};
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadJobs();
+            loadPlatforms();
+        });
+        
+        // API Helper
+        async function api(path, options = {}) {
+            const res = await fetch('/api' + path, {
+                headers: { 'Content-Type': 'application/json' },
+                ...options
+            });
+            if (!res.ok) throw new Error(await res.text());
+            return res.json();
+        }
+        
+        // Load Stats
+        async function loadStats() {
+            try {
+                const stats = await api('/stats');
+                document.getElementById('statTotal').textContent = stats.total_jobs || 0;
+                document.getElementById('statVerified').textContent = stats.verified_jobs || 0;
+                document.getElementById('statNew').textContent = stats.new_today || 0;
+                document.getElementById('statHighMatch').textContent = stats.high_match_jobs || 0;
+                document.getElementById('statHighRisk').textContent = stats.high_risk_jobs || 0;
+                
+                // Populate platform filter
+                const platformSelect = document.getElementById('filterPlatform');
+                if (stats.platform_breakdown) {
+                    Object.keys(stats.platform_breakdown).forEach(p => {
+                        if (![...platformSelect.options].some(o => o.value === p)) {
+                            const opt = document.createElement('option');
+                            opt.value = p;
+                            opt.textContent = p;
+                            platformSelect.appendChild(opt);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load stats:', e);
+            }
+        }
+        
+        // Load Platforms for filter
+        async function loadPlatforms() {
+            try {
+                const { platforms } = await api('/platforms');
+                const select = document.getElementById('filterPlatform');
+                platforms.forEach(p => {
+                    if (![...select.options].some(o => o.value === p.name)) {
+                        const opt = document.createElement('option');
+                        opt.value = p.name;
+                        opt.textContent = p.name;
+                        select.appendChild(opt);
+                    }
+                });
+            } catch (e) {
+                console.error('Failed to load platforms:', e);
+            }
+        }
+        
+        // Load Jobs
+        async function loadJobs() {
+            currentFilters = {
+                platform_id: document.getElementById('filterPlatform').value || undefined,
+                category: document.getElementById('filterCategory').value || undefined,
+                match_level: document.getElementById('filterMatchLevel').value || undefined,
+                verification_status: document.getElementById('filterVerification').value || undefined,
+                risk_level: document.getElementById('filterRisk').value || undefined,
+                min_score: document.getElementById('filterMinScore').value || undefined,
+                keyword: document.getElementById('filterKeyword').value || undefined,
+                page: currentPage,
+                per_page: perPage,
+                sort_by: 'score',
+                sort_order: 'desc'
+            };
+            
+            // Remove undefined
+            Object.keys(currentFilters).forEach(k => currentFilters[k] === undefined && delete currentFilters[k]);
+            
+            const tbody = document.getElementById('jobsBody');
+            tbody.innerHTML = '<tr><td colspan="8" class="loading"><div class="spinner"></div></td></tr>';
+            
+            try {
+                const result = await api('/jobs', {
+                    method: 'POST',
+                    body: JSON.stringify(currentFilters)
+                });
+                
+                renderJobs(result.jobs);
+                updatePagination(result);
+            } catch (e) {
+                console.error('Failed to load jobs:', e);
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Failed to load jobs</td></tr>';
+            }
+        }
+        
+        // Render Jobs
+        function renderJobs(jobs) {
+            const tbody = document.getElementById('jobsBody');
+            
+            if (!jobs || jobs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><p>No jobs found matching your criteria</p></td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = jobs.map(job => `
+                <tr onclick="openModal('${job.job_id}')" style="cursor: pointer;">
+                    <td>
+                        <div class="job-title" title="${escapeHtml(job.title)}">${escapeHtml(job.title)}</div>
+                        <div class="job-platform">${escapeHtml(job.platform)}</div>
+                    </td>
+                    <td>${escapeHtml(job.platform)}</td>
+                    <td>${escapeHtml(job.time_since_posted || 'Unknown')}</td>
+                    <td>${escapeHtml(job.budget || 'Not specified')}</td>
+                    <td>
+                        <span class="badge badge-${(job.match_level || 'not_relevant').toLowerCase().replace('_', '-')}">
+                            ${(job.match_level || 'NOT_RELEVANT').replace('_', ' ')}
+                        </span>
+                        ${job.match_score ? `<div class="score ${job.match_score >= 70 ? 'score-high' : job.match_score >= 40 ? 'score-medium' : 'score-low'}" style="font-size: 0.75rem; margin-top: 2px;">${job.match_score.toFixed(1)}</div>` : ''}
+                    </td>
+                    <td>
+                        <span class="badge badge-${(job.risk_level || 'low').toLowerCase()}">
+                            ${job.risk_level || 'LOW'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge badge-${(job.verification_status || 'unverified').toLowerCase().replace('_', '-')}">
+                            ${(job.verification_status || 'UNVERIFIED').replace('_', ' ')}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn btn-primary" onclick="event.stopPropagation(); openModal('${job.job_id}')">View</button>
+                            <button class="action-btn btn-secondary" onclick="event.stopPropagation(); copyProposal('${job.job_id}', 'short')">Copy Short</button>
+                            <button class="action-btn btn-secondary" onclick="event.stopPropagation(); copyProposal('${job.job_id}', 'normal')">Copy Normal</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function updatePagination(result) {
+            document.getElementById('pageInfo').textContent = `Page ${result.page} of ${result.total_pages} (${result.total} total)`;
+            document.getElementById('prevPage').disabled = result.page <= 1;
+            document.getElementById('nextPage').disabled = result.page >= result.total_pages;
+            currentPage = result.page;
+        }
+        
+        function changePage(delta) {
+            currentPage += delta;
+            loadJobs();
+        }
+        
+        // Modal
+        async function openModal(jobId) {
+            try {
+                const job = await api(`/jobs/${jobId}`);
+                renderModal(job);
+                document.getElementById('jobModal').classList.add('active');
+            } catch (e) {
+                console.error('Failed to load job:', e);
+                alert('Failed to load job details');
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('jobModal').classList.remove('active');
+        }
+        
+        function renderModal(job) {
+            const body = document.getElementById('modalBody');
+            document.getElementById('modalTitle').textContent = job.title;
+            
+            body.innerHTML = `
+                <div class="modal-section">
+                    <div class="modal-section-title">Overview</div>
+                    <div class="modal-field"><span class="modal-field-label">Platform</span><span class="modal-field-value">${escapeHtml(job.platform)}</span></div>
+                    <div class="modal-field"><span class="modal-field-label">Posted</span><span class="modal-field-value">${escapeHtml(job.time_since_posted || 'Unknown')}</span></div>
+                    <div class="modal-field"><span class="modal-field-label">Budget</span><span class="modal-field-value">${escapeHtml(job.budget || 'Not specified')}</span></div>
+                    <div class="modal-field"><span class="modal-field-label">Type</span><span class="modal-field-value">${escapeHtml(job.fixed_price_or_hourly || 'Not specified')}</span></div>
+                    <div class="modal-field"><span class="modal-field-label">Category</span><span class="modal-field-value">${escapeHtml(job.category)} / ${escapeHtml(job.sub_category || '')}</span></div>
+                    <div class="modal-field"><span class="modal-field-label">Experience</span><span class="modal-field-value">${escapeHtml(job.experience_level || 'Not specified')}</span></div>
+                    <div class="modal-field"><span class="modal-field-label">Duration</span><span class="modal-field-value">${escapeHtml(job.estimated_duration || 'Not specified')}</span></div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">Match Analysis</div>
+                    <div class="modal-field"><span class="modal-field-label">Match Level</span><span class="modal-field-value"><span class="badge badge-${(job.match_level || 'not_relevant').toLowerCase().replace('_', '-')}">${(job.match_level || 'NOT_RELEVANT').replace('_', ' ')}</span></span></div>
+                    <div class="modal-field"><span class="modal-field-label">Match Score</span><span class="modal-field-value">${job.match_score?.toFixed(1) || 'N/A'}/100</span></div>
+                    <div class="modal-field"><span class="modal-field-label">Risk Level</span><span class="modal-field-value"><span class="badge badge-${(job.risk_level || 'low').toLowerCase()}">${job.risk_level || 'LOW'}</span></span></div>
+                    <div class="modal-field"><span class="modal-field-label">Verification</span><span class="modal-field-value"><span class="badge badge-${(job.verification_status || 'unverified').toLowerCase().replace('_', '-')}">${(job.verification_status || 'UNVERIFIED').replace('_', ' ')}</span></span></div>
+                    <div class="modal-field"><span class="modal-field-label">Why it matches</span><span class="modal-field-value">${escapeHtml(job.match_reason || 'N/A')}</span></div>
+                    <div class="modal-field"><span class="modal-field-label">Matched Skills</span><span class="modal-field-value">${(job.matched_skills || []).join(', ')}</span></div>
+                    <div class="modal-field"><span class="modal-field-label">Required Skills</span><span class="modal-field-value">${(job.required_skills || []).join(', ')}</span></div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">Client Information</div>
+                    <div class="modal-field"><span class="modal-field-label">Name</span><span class="modal-field-value">${escapeHtml(job.client_name || 'N/A')}</span></div>
+                    <div class="modal-field"><span class="modal-field-label">Country</span><span class="modal-field-value">${escapeHtml(job.client_country || 'N/A')}</span></div>
+                    <div class="modal-field"><span class="modal-field-label">Rating</span><span class="modal-field-value">${job.client_rating ? job.client_rating.toFixed(1) : 'N/A'} (${job.client_review_count || 0} reviews)</span></div>
+                    <div class="modal-field"><span class="modal-field-label">Hire History</span><span class="modal-field-value">${job.client_hire_history || 0} hires, $${job.client_total_spent || 0} spent</span></div>
+                    <div class="modal-field"><span class="modal-field-label">Payment Status</span><span class="modal-field-value">${escapeHtml(job.client_payment_status || 'Unknown')}</span></div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">Description</div>
+                    <div class="proposal-box">${escapeHtml(job.full_description || job.short_summary || 'No description')}</div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">Suggested Proposals</div>
+                    <div style="display: grid; gap: 15px;">
+                        <div>
+                            <label class="modal-section-title">Short Proposal</label>
+                            <div class="proposal-box">${escapeHtml(job.proposal_short || 'Not generated')}</div>
+                            <button class="btn btn-secondary" style="margin-top: 10px;" onclick="copyText('${escapeHtml(job.proposal_short || '').replace(/'/g, "\\'")}')">Copy</button>
+                        </div>
+                        <div>
+                            <label class="modal-section-title">Normal Proposal</label>
+                            <div class="proposal-box">${escapeHtml(job.proposal_normal || 'Not generated')}</div>
+                            <button class="btn btn-secondary" style="margin-top: 10px;" onclick="copyText('${escapeHtml(job.proposal_normal || '').replace(/'/g, "\\'")}')">Copy</button>
+                        </div>
+                        <div>
+                            <label class="modal-section-title">Ultra Short Proposal</label>
+                            <div class="proposal-box">${escapeHtml(job.proposal_ultra_short || 'Not generated')}</div>
+                            <button class="btn btn-secondary" style="margin-top: 10px;" onclick="copyText('${escapeHtml(job.proposal_ultra_short || '').replace(/'/g, "\\'")}')">Copy</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-field"><span class="modal-field-label">Job Link</span><span class="modal-field-value"><a href="${escapeHtml(job.job_url)}" target="_blank">${escapeHtml(job.job_url)}</a></span></div>
+                </div>
+            `;
+        }
+        
+        // Actions
+        async function runScan() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '⏳ Running...';
+            
+            try {
+                await api('/scan', { method: 'POST', body: JSON.stringify({ priority: 1, max_pages: 5 }) });
+                alert('Scan started! Check back in a few minutes.');
+                setTimeout(() => { loadStats(); loadJobs(); }, 5000);
+            } catch (e) {
+                alert('Failed to start scan: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '▶ Run Scan';
+            }
+        }
+        
+        async function generateReport() {
+            try {
+                const { report } = await api('/report/daily');
+                // Open in new window
+                const win = window.open('', '_blank');
+                win.document.write('<pre style="font-family: monospace; padding: 20px;">' + escapeHtml(report) + '</pre>');
+            } catch (e) {
+                alert('Failed to generate report: ' + e.message);
+            }
+        }
+        
+        async function exportJobs() {
+            const format = prompt('Export format (csv, xlsx, json, md, html):', 'csv');
+            if (!format) return;
+            
+            try {
+                const blob = await fetch('/api/export', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ format })
+                }).then(r => r.blob());
+                
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `freelance_jobs_${new Date().toISOString().split('T')[0]}.${format}`;
+                a.click();
+            } catch (e) {
+                alert('Export failed: ' + e.message);
+            }
+        }
+        
+        async function refreshStats() {
+            await loadStats();
+            await loadJobs();
+        }
+        
+        async function copyProposal(jobId, type) {
+            try {
+                const job = await api(`/jobs/${jobId}`);
+                const proposal = job[`proposal_${type}`];
+                if (proposal) {
+                    await navigator.clipboard.writeText(proposal);
+                    alert(`${type} proposal copied!`);
+                } else {
+                    alert('Proposal not generated yet');
+                }
+            } catch (e) {
+                alert('Failed to copy: ' + e.message);
+            }
+        }
+        
+        function copyText(text) {
+            navigator.clipboard.writeText(text);
+            alert('Copied!');
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Close modal on overlay click
+        document.getElementById('jobModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeModal();
+        });
+        
+        // ESC key to close modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+{
+  "skills": [
+    "Microsoft Excel",
+    "Microsoft PowerPoint",
+    "Microsoft Word",
+    "Data Entry",
+    "PDF Conversion",
+    "Google Sheets",
+    "Data Cleaning",
+    "Web Research",
+    "Document Formatting",
+    "Copy Typing",
+    "OCR",
+    "Spreadsheet Organization",
+    "Presentation Design",
+    "Slide Formatting",
+    "File Conversion",
+    "Administrative Support",
+    "Virtual Assistant",
+    "Product Listing",
+    "Internet Research"
+  ],
+  "experience_level": "Beginner/Intermediate",
+  "languages": [
+    "Arabic",
+    "English"
+  ],
+  "location": "Egypt",
+  "availability": "Remote",
+  "strengths": [
+    "attention to detail",
+    "organization",
+    "fast learning",
+    "accuracy",
+    "reliability",
+    "communication"
+  ],
+  "portfolio_urls": [],
+  "bio": "Detail-oriented freelancer specializing in Microsoft Office suite, data entry, document conversion, and presentation design. Fluent in Arabic and English. Available for remote work with quick turnaround times.",
+  "hourly_rate_range": {
+    "min": 5,
+    "max": 25,
+    "currency": "USD"
+  },
+  "preferred_job_types": [
+    "fixed_price",
+    "hourly"
+  ],
+  "max_hours_per_week": 30
+}

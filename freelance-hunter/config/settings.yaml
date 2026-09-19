@@ -1,0 +1,269 @@
+# Freelance Hunter Configuration
+
+database:
+  type: "sqlite"  # sqlite or postgresql
+  sqlite_path: "data/freelance_hunter.db"
+  postgresql:
+    host: "localhost"
+    port: 5432
+    database: "freelance_hunter"
+    user: "postgres"
+    password: "${POSTGRES_PASSWORD}"
+
+search:
+  time_windows:
+    priority_1_hours: 24      # Last 24 hours
+    priority_2_hours: 72      # 24-72 hours
+    priority_3_hours: 168     # 3-7 days
+    priority_4_hours: 720     # 8-30 days
+  
+  max_pages_per_platform: 5
+  max_results_per_query: 50
+  rate_limit_delay: 2  # seconds between requests
+  timeout: 30  # seconds
+  
+  search_engines:
+    - "google"
+    - "bing"
+    - "duckduckgo"
+  
+  platforms:
+    - "upwork"
+    - "freelancer"
+    - "peopleperhour"
+    - "guru"
+    - "workana"
+    - "contra"
+    - "fiverr"
+    - "khamsat"
+    - "mostaql"
+    - "linkedin"
+
+agents:
+  platform_discovery:
+    enabled: true
+    max_new_platforms_per_run: 5
+  
+  specialized_agents:
+    data_entry:
+      enabled: true
+      keywords:
+        - "data entry"
+        - "data entry specialist"
+        - "excel data entry"
+        - "google sheets data entry"
+        - "copy paste"
+        - "copy typing"
+        - "invoice data entry"
+        - "receipt data entry"
+        - "image to excel"
+        - "pdf to excel"
+        - "data cleaning"
+        - "data formatting"
+        - "web research"
+        - "data collection"
+        - "virtual assistant"
+        - "administrative assistant"
+        - "database entry"
+        - "form filling"
+        - "catalog entry"
+        - "product listing"
+    
+    document_pdf_word:
+      enabled: true
+      keywords:
+        - "pdf to word"
+        - "pdf conversion"
+        - "pdf formatting"
+        - "word formatting"
+        - "document formatting"
+        - "ocr"
+        - "scanned document"
+        - "typing pdf"
+        - "document conversion"
+        - "pdf to excel"
+        - "word to pdf"
+        - "document cleanup"
+        - "copy typing"
+        - "transcription"
+    
+    powerpoint_presentation:
+      enabled: true
+      keywords:
+        - "powerpoint"
+        - "powerpoint presentation"
+        - "powerpoint formatting"
+        - "presentation design"
+        - "presentation redesign"
+        - "slide formatting"
+        - "pitch deck"
+        - "business presentation"
+        - "academic presentation"
+        - "canva presentation"
+        - "google slides"
+        - "presentation formatting"
+        - "slide design"
+        - "keynote"
+    
+    excel_spreadsheet:
+      enabled: true
+      keywords:
+        - "excel"
+        - "microsoft excel"
+        - "google sheets"
+        - "spreadsheet"
+        - "spreadsheet formatting"
+        - "spreadsheet cleanup"
+        - "excel formulas"
+        - "excel data cleaning"
+        - "excel formatting"
+        - "excel conversion"
+        - "spreadsheet organization"
+        - "data analysis excel"
+        - "vlookup"
+        - "pivot table"
+    
+    general_freelance:
+      enabled: true
+      keywords:
+        - "virtual assistant"
+        - "web research"
+        - "copy paste"
+        - "data collection"
+        - "administrative tasks"
+        - "product listing"
+        - "file conversion"
+        - "internet research"
+        - "microsoft office"
+        - "google workspace"
+        - "administrative support"
+        - "simple computer tasks"
+        - "data extraction"
+        - "file organization"
+        - "document organization"
+
+verification:
+  enabled: true
+  check_url_accessible: true
+  check_listing_exists: true
+  check_job_not_expired: true
+  check_not_freelancer_profile: true
+  check_not_spam: true
+  require_minimum_fields: 5
+
+deduplication:
+  enabled: true
+  similarity_threshold: 0.85
+  check_fields:
+    - "url"
+    - "title"
+    - "client_name"
+    - "description"
+    - "posted_date"
+    - "platform"
+
+matching:
+  enabled: true
+  levels:
+    - "EXCELLENT_MATCH"
+    - "GOOD_MATCH"
+    - "POSSIBLE_MATCH"
+    - "WEAK_MATCH"
+    - "NOT_RELEVANT"
+  
+  skill_match_weight: 0.30
+  recency_weight: 0.20
+  beginner_accessibility_weight: 0.15
+  budget_weight: 0.10
+  client_quality_weight: 0.10
+  competition_weight: 0.05
+  clarity_weight: 0.05
+  ease_weight: 0.05
+
+scoring:
+  max_score: 100
+  components:
+    skill_match: 30
+    recency: 20
+    beginner_accessibility: 15
+    budget_value: 10
+    client_quality: 10
+    competition: 5
+    clarity: 5
+    ease: 5
+
+risk_detection:
+  enabled: true
+  levels:
+    - "LOW"
+    - "MEDIUM"
+    - "HIGH"
+    - "CRITICAL"
+  
+  red_flags:
+    - "unrealistic promises"
+    - "payment before start"
+    - "crypto only payment"
+    - "request passwords"
+    - "request account access"
+    - "external links suspicious"
+    - "telegram/whatsapp migration"
+    - "impossible deadlines"
+    - "extremely low pay"
+    - "prohibited work"
+    - "platform violation"
+
+proposal:
+  enabled: true
+  templates:
+    short: true
+    normal: true
+    ultra_short: true
+  
+  guidelines:
+    - "Address client's specific task"
+    - "Be natural and conversational"
+    - "Don't exaggerate experience"
+    - "Don't invent portfolio items"
+    - "Mention only relevant skills"
+    - "Be concise"
+    - "Focus on client's problem"
+    - "State what you can deliver"
+    - "Include 1-2 relevant questions"
+
+scheduler:
+  enabled: true
+  default_interval_hours: 6
+  intervals:
+    - "1h"
+    - "3h"
+    - "6h"
+    - "12h"
+    - "24h"
+  
+  timezone: "Africa/Cairo"
+
+dashboard:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+
+export:
+  formats:
+    - "csv"
+    - "xlsx"
+    - "json"
+    - "markdown"
+    - "html"
+  
+  output_dir: "exports"
+
+logging:
+  level: "INFO"
+  file: "logs/freelance_hunter.log"
+  max_size_mb: 10
+  backup_count: 5
+
+api_keys:
+  aisa: "${AISA_API_KEY}"
+  # Add other API keys as needed
