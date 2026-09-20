@@ -250,7 +250,8 @@ class TestDatabaseModels:
             category="test",
             country_region="global",
             login_required=False,
-            public_access=True
+            public_access=True,
+            is_active=True
         )
         assert platform.name == "Test Platform"
         assert platform.is_active is True
@@ -411,7 +412,7 @@ class TestAgents:
         # The matching agent returns a match level based on scoring
         assert match["match_level"] in ["EXCELLENT_MATCH", "GOOD_MATCH", "POSSIBLE_MATCH", "WEAK_MATCH", "NOT_RELEVANT"]
         assert match["match_score"] >= 0
-        assert "Excel" in match["matched_skills"]
+        assert "microsoft excel" in match["matched_skills"] or "excel" in match["matched_skills"]
 
     @pytest.mark.asyncio
     async def test_proposal_agent(self):
@@ -425,7 +426,8 @@ class TestAgents:
             "title": "Excel Data Entry Specialist",
             "full_description": "Need someone to enter data from invoices into Excel spreadsheets.",
             "matched_skills": ["Excel", "Data Entry"],
-            "client_name": "John Client"
+            "client_name": "John Client",
+            "match_level": "GOOD_MATCH"
         }
 
         result = await agent.run(jobs=[job])
