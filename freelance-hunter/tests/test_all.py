@@ -171,7 +171,7 @@ class TestUtils:
         cat, subcat = categorize_job("Excel Data Entry Specialist", "Need data entry in Excel", categories)
         assert cat == "data_entry"
 
-        cat, subcat = categorize_job("PowerPoint Presentation Design", "Create beautiful slides", categories)
+        cat, _subcat = categorize_job("PowerPoint Presentation Design", "Create beautiful slides", categories)
         assert cat == "presentation"
 
     def test_estimate_difficulty(self):

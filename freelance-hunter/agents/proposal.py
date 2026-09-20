@@ -27,7 +27,7 @@ class ProposalSet:
 class ProposalAgent(BaseAgent):
     """Agent that generates customized proposals for jobs."""
     
-    def __init__(self, config: dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] | None = None, db_manager=None):
         super().__init__("proposal_agent", config, db_manager)
         self.config = config or get_config()._config
         self.proposal_config = self.config.get("proposal", {})
@@ -89,7 +89,7 @@ class ProposalAgent(BaseAgent):
         """Analyze job to extract key information for proposal."""
         title = job.get("title", "")
         description = job.get("full_description", "")
-        skills = job.get("required_skills", [])
+        job.get("required_skills", [])
         matched_skills = job.get("matched_skills", [])
         budget = job.get("budget", "")
         client_name = job.get("client_name", "Client")
@@ -145,7 +145,7 @@ class ProposalAgent(BaseAgent):
     def _extract_deliverables(self, description: str) -> list[str]:
         """Extract deliverables from job description."""
         deliverables = []
-        desc_lower = description.lower()
+        description.lower()
         
         keywords = ["deliver", "output", "provide", "submit", "create", "format", "convert", "organize"]
         

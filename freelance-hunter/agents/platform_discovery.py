@@ -259,7 +259,7 @@ class PlatformDiscoveryAgent(BaseAgent):
         "latin america freelance sites"
     ]
     
-    def __init__(self, config: dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] | None = None, db_manager=None):
         super().__init__("platform_discovery", config, db_manager)
         self.config = config or get_config()._config
         self.discovered_platforms: list[PlatformInfo] = []

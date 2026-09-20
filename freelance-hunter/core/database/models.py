@@ -342,7 +342,7 @@ class ExportJob(Base):
     error = Column(Text)
 
 
-def get_engine(database_url: str = None):
+def get_engine(database_url: str | None = None):
     """Create SQLAlchemy engine."""
     from sqlalchemy import create_engine
     from sqlalchemy.pool import StaticPool
@@ -364,14 +364,14 @@ def get_engine(database_url: str = None):
     return engine
 
 
-def init_database(database_url: str = None):
+def init_database(database_url: str | None = None):
     """Initialize database tables."""
     engine = get_engine(database_url)
     Base.metadata.create_all(engine)
     return engine
 
 
-def get_session(database_url: str = None):
+def get_session(database_url: str | None = None):
     """Get database session."""
     from sqlalchemy.orm import sessionmaker
     engine = get_engine(database_url)

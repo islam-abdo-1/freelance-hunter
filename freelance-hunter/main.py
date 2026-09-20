@@ -116,7 +116,7 @@ async def run_scheduler(args):
             await asyncio.sleep(60)
             # Print status periodically
             jobs = scheduler.get_scheduled_jobs()
-            for job_id, job in jobs.items():
+            for job in jobs.values():
                 next_run = job.next_run.strftime("%Y-%m-%d %H:%M:%S") if job.next_run else "N/A"
                 print(f"[{datetime.now().strftime('%H:%M:%S')}] {job.name}: next run at {next_run}")
     except KeyboardInterrupt:
@@ -247,10 +247,10 @@ Examples:
                             help='Export results after scan')
     
     # Scheduler command
-    scheduler_parser = subparsers.add_parser('scheduler', help='Run continuous scheduler')
+    subparsers.add_parser('scheduler', help='Run continuous scheduler')
     
     # Stats command
-    stats_parser = subparsers.add_parser('stats', help='Show dashboard statistics')
+    subparsers.add_parser('stats', help='Show dashboard statistics')
     
     # Report command
     report_parser = subparsers.add_parser('report', help='Generate daily report')
@@ -266,10 +266,10 @@ Examples:
     export_parser.add_argument('--output', help='Output filename')
     
     # Init DB command
-    init_parser = subparsers.add_parser('init-db', help='Initialize database')
+    subparsers.add_parser('init-db', help='Initialize database')
     
     # Config command
-    config_parser = subparsers.add_parser('config', help='Show current configuration')
+    subparsers.add_parser('config', help='Show current configuration')
     
     args = parser.parse_args()
     

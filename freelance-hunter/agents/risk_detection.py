@@ -45,7 +45,7 @@ class RiskAssessment:
 class RiskDetectionAgent(BaseAgent):
     """Agent that detects red flags and assesses risk in job listings."""
     
-    def __init__(self, config: dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] | None = None, db_manager=None):
         super().__init__("risk_detection_agent", config, db_manager)
         self.config = config or get_config()._config
         self.risk_config = self.config.get("risk_detection", {})
@@ -225,7 +225,7 @@ class RiskDetectionAgent(BaseAgent):
         
         # Combine text for analysis
         full_text = f"{job.get('title', '')} {job.get('full_description', '')}".lower()
-        client_name = job.get("client_name", "").lower()
+        job.get("client_name", "").lower()
         
         # Check each pattern category
         for flag_type, config in self.red_flag_patterns.items():
@@ -319,15 +319,14 @@ class RiskDetectionAgent(BaseAgent):
                     evidence=f"Budget: ${budget_min}/hr",
                     detected_at=datetime.utcnow()
                 ))
-        elif job_type == "fixed":
-            if budget_max > fixed_max:
-                flags.append(RedFlag(
-                    flag_type="suspiciously_high_pay",
-                    severity=RiskLevel.MEDIUM,
-                    description=f"Fixed price ${budget_max} unusually high for {category}",
-                    evidence=f"Budget: ${budget_max} fixed, Category: {category}",
-                    detected_at=datetime.utcnow()
-                ))
+        elif job_type == "fixed" and budget_max > fixed_max:
+            flags.append(RedFlag(
+                flag_type="suspiciously_high_pay",
+                severity=RiskLevel.MEDIUM,
+                description=f"Fixed price ${budget_max} unusually high for {category}",
+                evidence=f"Budget: ${budget_max} fixed, Category: {category}",
+                detected_at=datetime.utcnow()
+            ))
         
         return flags
     

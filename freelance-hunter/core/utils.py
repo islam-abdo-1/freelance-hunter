@@ -437,7 +437,7 @@ def truncate_text(text: str, max_length: int = 500, suffix: str = "...") -> str:
     return text[:max_length - len(suffix)].rsplit(' ', 1)[0] + suffix
 
 
-def is_likely_spam(title: str, description: str, client_info: dict = None) -> tuple[bool, list[str]]:
+def is_likely_spam(title: str, description: str, client_info: dict | None = None) -> tuple[bool, list[str]]:
     """Check if job listing appears to be spam."""
     reasons = []
     text = f"{title} {description}".lower()
@@ -473,7 +473,7 @@ def validate_job_url(url: str, platform: str) -> bool:
         return False
     
     parsed = urlparse(url)
-    domain = parsed.netloc.lower()
+    parsed.netloc.lower()
     
     # Platform-specific validation
     platform_patterns = {
@@ -516,7 +516,7 @@ def save_json_file(data: dict[str, Any], filepath: str):
         logger.error(f"Failed to save JSON to {filepath}: {e}")
 
 
-def setup_logging(level: str = "INFO", log_file: str = None):
+def setup_logging(level: str = "INFO", log_file: str | None = None):
     """Setup logging configuration."""
     log_level = getattr(logging, level.upper(), logging.INFO)
     

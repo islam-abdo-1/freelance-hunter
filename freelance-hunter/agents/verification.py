@@ -32,7 +32,7 @@ class VerificationResult:
 class VerificationAgent(BaseAgent):
     """Agent that verifies job listings."""
     
-    def __init__(self, config: dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] | None = None, db_manager=None):
         super().__init__("verification_agent", config, db_manager)
         self.config = config or get_config()._config
         self.verification_config = self.config.get("verification", {})
@@ -286,10 +286,7 @@ class VerificationAgent(BaseAgent):
             "this job is closed", "position filled", "no longer accepting",
             "hiring complete", "job expired", "application closed"
         ]
-        if any(kw in description for kw in expired_keywords):
-            return True
-        
-        return False
+        return bool(any(kw in description for kw in expired_keywords))
     
     def _check_is_real_job(self, job: dict[str, Any]) -> bool:
         """Check if listing is a real job posting (not freelancer profile)."""

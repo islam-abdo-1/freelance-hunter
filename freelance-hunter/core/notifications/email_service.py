@@ -28,7 +28,7 @@ class EmailTemplate:
 class EmailService:
     """Handles sending email notifications."""
     
-    def __init__(self, config: dict[str, Any] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or get_config().email_config
         self.enabled = self.config.get("enabled", False)
         self.smtp_host = self.config.get("smtp_host", "smtp.gmail.com")
@@ -89,7 +89,7 @@ class EmailService:
     
     # ===== Templates =====
     
-    def _scan_complete_template(self, stats: dict[str, Any], top_jobs: list[dict[str, Any]] = None) -> EmailTemplate:
+    def _scan_complete_template(self, stats: dict[str, Any], top_jobs: list[dict[str, Any]] | None = None) -> EmailTemplate:
         """Template for scan completion notification."""
         top_jobs = top_jobs or []
         
@@ -252,8 +252,8 @@ class EmailService:
     
     # ===== Public Methods =====
     
-    async def send_scan_complete(self, stats: dict[str, Any], top_jobs: list[dict[str, Any]] = None, 
-                                  email: str = None) -> bool:
+    async def send_scan_complete(self, stats: dict[str, Any], top_jobs: list[dict[str, Any]] | None = None, 
+                                  email: str | None = None) -> bool:
         """Send scan completion notification."""
         email = email or get_config().email_notifications.get("email")
         if not email:
@@ -269,7 +269,7 @@ class EmailService:
         template = self._scan_complete_template(stats, top_jobs)
         return await self.send_email_async(email, template.subject, template.html_body, template.text_body)
     
-    async def send_high_match_alert(self, job: dict[str, Any], email: str = None) -> bool:
+    async def send_high_match_alert(self, job: dict[str, Any], email: str | None = None) -> bool:
         """Send high match job alert."""
         email = email or get_config().email_notifications.get("email")
         if not email:
@@ -284,7 +284,7 @@ class EmailService:
         template = self._high_match_alert_template(job)
         return await self.send_email_async(email, template.subject, template.html_body, template.text_body)
     
-    async def send_test_email(self, email: str = None) -> bool:
+    async def send_test_email(self, email: str | None = None) -> bool:
         """Send test email to verify configuration."""
         email = email or get_config().email_notifications.get("email")
         if not email:

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class ExportManager:
     """Manages export of jobs to various formats."""
     
-    def __init__(self, output_dir: str = None):
+    def __init__(self, output_dir: str | None = None):
         self.config = get_config()
         self.output_dir = Path(output_dir or self.config.get("export", {}).get("output_dir", "exports"))
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -36,7 +36,7 @@ class ExportManager:
         ]
     
     def export_jobs(self, jobs: list[dict[str, Any]], format: str = "csv", 
-                    filename: str = None) -> str:
+                    filename: str | None = None) -> str:
         """Export jobs to specified format."""
         if not jobs:
             logger.warning("No jobs to export")
@@ -94,7 +94,6 @@ class ExportManager:
             df.to_excel(writer, index=False, sheet_name='Jobs')
             
             # Get workbook and worksheet
-            workbook = writer.book
             worksheet = writer.sheets['Jobs']
             
             # Auto-fit columns
@@ -395,7 +394,7 @@ class ExportManager:
 
 # Convenience function
 def export_jobs(jobs: list[dict[str, Any]], format: str = "csv", 
-                output_dir: str = None, filename: str = None) -> str:
+                output_dir: str | None = None, filename: str | None = None) -> str:
     """Export jobs to file."""
     manager = ExportManager(output_dir)
     return manager.export_jobs(jobs, format, filename)

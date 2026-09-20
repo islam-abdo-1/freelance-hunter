@@ -73,7 +73,7 @@ class JobListing:
 class BaseJobSearchAgent(BaseAgent, ABC):
     """Base class for specialized job search agents."""
     
-    def __init__(self, name: str, category: str, keywords: list[str], config: dict[str, Any] = None, db_manager=None):
+    def __init__(self, name: str, category: str, keywords: list[str], config: dict[str, Any] | None = None, db_manager=None):
         super().__init__(name, config, db_manager)
         self.category = category
         self.keywords = keywords
@@ -332,7 +332,7 @@ class BaseJobSearchAgent(BaseAgent, ABC):
 class DataEntryJobAgent(BaseJobSearchAgent):
     """Agent for finding data entry jobs."""
     
-    def __init__(self, config: dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] | None = None, db_manager=None):
         keywords = [
             "data entry", "data entry specialist", "excel data entry",
             "google sheets data entry", "copy paste", "copy typing",
@@ -405,7 +405,7 @@ class DataEntryJobAgent(BaseJobSearchAgent):
 class DocumentPdfWordAgent(BaseJobSearchAgent):
     """Agent for finding document/PDF/Word jobs."""
     
-    def __init__(self, config: dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] | None = None, db_manager=None):
         keywords = [
             "pdf to word", "pdf conversion", "pdf formatting", "word formatting",
             "document formatting", "ocr", "scanned document", "typing pdf",
@@ -454,7 +454,7 @@ class DocumentPdfWordAgent(BaseJobSearchAgent):
 class PowerPointPresentationAgent(BaseJobSearchAgent):
     """Agent for finding PowerPoint/presentation jobs."""
     
-    def __init__(self, config: dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] | None = None, db_manager=None):
         keywords = [
             "powerpoint", "powerpoint presentation", "powerpoint formatting",
             "presentation design", "presentation redesign", "slide formatting",
@@ -505,7 +505,7 @@ class PowerPointPresentationAgent(BaseJobSearchAgent):
 class ExcelSpreadsheetAgent(BaseJobSearchAgent):
     """Agent for finding Excel/spreadsheet jobs."""
     
-    def __init__(self, config: dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] | None = None, db_manager=None):
         keywords = [
             "excel", "microsoft excel", "google sheets", "spreadsheet",
             "spreadsheet formatting", "spreadsheet cleanup", "excel formulas",
@@ -555,7 +555,7 @@ class ExcelSpreadsheetAgent(BaseJobSearchAgent):
 class GeneralFreelanceAgent(BaseJobSearchAgent):
     """Agent for finding general easy-entry freelance work."""
     
-    def __init__(self, config: dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] | None = None, db_manager=None):
         keywords = [
             "virtual assistant", "web research", "copy paste", "data collection",
             "administrative tasks", "product listing", "file conversion",
@@ -608,7 +608,7 @@ class GeneralFreelanceAgent(BaseJobSearchAgent):
 class SearchEngineAgent(BaseAgent):
     """Agent that searches search engines for job listings."""
     
-    def __init__(self, config: dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] | None = None, db_manager=None):
         super().__init__("search_engine_agent", config, db_manager)
         self.config = config or get_config()._config
         self.search_engines = self.config.get("search", {}).get("search_engines", ["google", "bing", "duckduckgo"])
@@ -647,7 +647,7 @@ class SearchEngineAgent(BaseAgent):
         
         # Add site-specific queries
         queries = []
-        for site, site_query in self.site_queries.items():
+        for site_query in self.site_queries.values():
             for base in base_queries:
                 queries.append(f"{site_query} {base}")
         
@@ -694,7 +694,7 @@ class SearchEngineAgent(BaseAgent):
 
 
 # Factory function to create all specialized agents
-def create_specialized_agents(config: dict[str, Any] = None, db_manager=None) -> list[BaseJobSearchAgent]:
+def create_specialized_agents(config: dict[str, Any] | None = None, db_manager=None) -> list[BaseJobSearchAgent]:
     """Create all specialized job search agents."""
     agents = [
         DataEntryJobAgent(config, db_manager),

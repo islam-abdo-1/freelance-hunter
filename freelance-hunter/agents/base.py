@@ -36,7 +36,7 @@ class AgentResult:
 class BaseAgent(ABC):
     """Base class for all agents."""
     
-    def __init__(self, name: str, config: dict[str, Any] = None, db_manager=None):
+    def __init__(self, name: str, config: dict[str, Any] | None = None, db_manager=None):
         self.name = name
         self.config = config or {}
         self.db_manager = db_manager
@@ -120,7 +120,7 @@ class BaseAgent(ABC):
 class AgentOrchestrator:
     """Orchestrates multiple agents."""
     
-    def __init__(self, config: dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] | None = None, db_manager=None):
         self.config = config or {}
         self.db_manager = db_manager
         self.agents: dict[str, BaseAgent] = {}

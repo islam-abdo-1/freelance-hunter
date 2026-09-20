@@ -46,7 +46,7 @@ class PipelineResult:
 class FreelanceHunterOrchestrator:
     """Main orchestrator for the freelance job hunting system."""
     
-    def __init__(self, db_manager=None, config: dict[str, Any] = None):
+    def __init__(self, db_manager=None, config: dict[str, Any] | None = None):
         self.db_manager = db_manager
         self.config = config or get_config()._config
         self.repositories = Repositories(db_manager) if db_manager else None
@@ -111,7 +111,7 @@ class FreelanceHunterOrchestrator:
             
             # Phase 4: Search Engine Queries
             self.logger.info("Phase 4: Search Engine Queries")
-            engine_result = await self.search_engine_agent.run()
+            await self.search_engine_agent.run()
             # In real implementation, would execute these queries
             
             # Phase 5: Deduplication
@@ -238,7 +238,7 @@ class FreelanceHunterOrchestrator:
         agent_names = [agent.name for agent in self.search_agents if agent.name != "search_engine_agent"]
         
         # Prepare kwargs for each agent
-        agent_kwargs = {
+        {
             name: {
                 "platforms": active_platforms,
                 "queries": queries,
@@ -396,7 +396,7 @@ class FreelanceHunterOrchestrator:
         
         return self.repositories.jobs.search_jobs(filters, page, per_page)
     
-    def export_jobs(self, format: str = "csv", filters: dict[str, Any] = None) -> str:
+    def export_jobs(self, format: str = "csv", filters: dict[str, Any] | None = None) -> str:
         """Export jobs to file."""
         # This would be implemented with actual export logic
         return f"exports/jobs_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.{format}"
@@ -453,7 +453,7 @@ class FreelanceHunterOrchestrator:
 
 
 # Convenience function for running pipeline
-async def run_pipeline(db_manager=None, config: dict[str, Any] = None, **kwargs) -> PipelineResult:
+async def run_pipeline(db_manager=None, config: dict[str, Any] | None = None, **kwargs) -> PipelineResult:
     """Run the full pipeline."""
     orchestrator = FreelanceHunterOrchestrator(db_manager=db_manager, config=config)
     return await orchestrator.run_full_pipeline(**kwargs)

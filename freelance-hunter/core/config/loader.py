@@ -11,7 +11,7 @@ import yaml
 class Config:
     """Configuration manager."""
     
-    def __init__(self, config_path: str = None):
+    def __init__(self, config_path: str | None = None):
         self.config_path = config_path or self._find_config()
         self._config: dict[str, Any] = {}
         self._profile: dict[str, Any] = {}
@@ -258,7 +258,7 @@ class Config:
         
         return value
     
-    def get_profile(self, key: str = None, default: Any = None) -> Any:
+    def get_profile(self, key: str | None = None, default: Any = None) -> Any:
         """Get profile value."""
         if key is None:
             return self._profile
@@ -301,7 +301,7 @@ class Config:
         
         profile[keys[-1]] = value
     
-    def save_profile(self, filepath: str = None):
+    def save_profile(self, filepath: str | None = None):
         """Save profile to file."""
         profile_path = filepath or os.path.join(os.path.dirname(self.config_path), "profile.json")
         with open(profile_path, 'w', encoding='utf-8') as f:
@@ -345,7 +345,7 @@ class Config:
 _config_instance: Config | None = None
 
 
-def get_config(config_path: str = None) -> Config:
+def get_config(config_path: str | None = None) -> Config:
     """Get global configuration instance."""
     global _config_instance
     if _config_instance is None:
@@ -353,7 +353,7 @@ def get_config(config_path: str = None) -> Config:
     return _config_instance
 
 
-def reload_config(config_path: str = None) -> Config:
+def reload_config(config_path: str | None = None) -> Config:
     """Reload configuration."""
     global _config_instance
     _config_instance = Config(config_path)

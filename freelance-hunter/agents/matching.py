@@ -39,7 +39,7 @@ class MatchResult:
 class JobMatchingAgent(BaseAgent):
     """Agent that matches jobs against user profile."""
     
-    def __init__(self, config: dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] | None = None, db_manager=None):
         super().__init__("job_matching_agent", config, db_manager)
         self.config = config or get_config()._config
         self.matching_config = self.config.get("matching", {})
@@ -164,7 +164,7 @@ class JobMatchingAgent(BaseAgent):
         if isinstance(job_matched_skills, str):
             job_matched_skills = [job_matched_skills]
         
-        all_job_skills = list(set([s.lower() for s in job_skills + job_matched_skills]))
+        all_job_skills = list({s.lower() for s in job_skills + job_matched_skills})
         
         # Extract skills from description
         desc_skills = extract_skills_from_text(
@@ -295,7 +295,7 @@ class JobMatchingAgent(BaseAgent):
             usd_rate = rates.get(currency, 1.0)
         
         min_usd = budget_min * usd_rate
-        max_usd = budget_max * usd_rate if budget_max else min_usd
+        budget_max * usd_rate if budget_max else min_usd
         
         if job_type == "hourly":
             # Hourly rate evaluation
@@ -403,7 +403,7 @@ class JobMatchingAgent(BaseAgent):
     def _calculate_competition_score(self, job: dict[str, Any]) -> float:
         """Calculate competition score (0-5). Lower competition = higher score."""
         proposals = job.get("proposals_count")
-        hires = job.get("hires_count")
+        job.get("hires_count")
         bids = job.get("bids_count")
         
         # Use available competition metric
@@ -425,7 +425,7 @@ class JobMatchingAgent(BaseAgent):
         score = 2.5  # Base
         
         description = job.get("full_description", "")
-        title = job.get("title", "")
+        job.get("title", "")
         
         # Length indicates detail
         if len(description) > 1000:

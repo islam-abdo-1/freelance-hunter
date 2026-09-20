@@ -46,7 +46,7 @@ class ScheduledJob:
 class JobHunterScheduler:
     """Scheduler for automated freelance job hunting."""
     
-    def __init__(self, db_manager: DatabaseManager = None, config: dict[str, Any] = None):
+    def __init__(self, db_manager: DatabaseManager = None, config: dict[str, Any] | None = None):
         self.db_manager = db_manager
         self.config = config or get_config()._config
         self.scheduler_config = self.config.get("scheduler", {})
@@ -99,7 +99,7 @@ class JobHunterScheduler:
     
     def add_scheduled_job(self, job_id: str, name: str, interval: ScheduleInterval,
                           priority: int = 1, max_pages: int = 5, 
-                          cron_expression: str = None) -> ScheduledJob:
+                          cron_expression: str | None = None) -> ScheduledJob:
         """Add a scheduled job."""
         if job_id in self.scheduled_jobs:
             self.remove_scheduled_job(job_id)
@@ -249,7 +249,7 @@ class JobHunterScheduler:
     def get_next_run_times(self) -> dict[str, datetime]:
         """Get next run times for all jobs."""
         next_runs = {}
-        for job_id, scheduled_job in self.scheduled_jobs.items():
+        for job_id in self.scheduled_jobs:
             job = self.scheduler.get_job(job_id)
             if job:
                 next_runs[job_id] = job.next_run_time
@@ -260,7 +260,7 @@ class JobHunterScheduler:
 _scheduler_instance: JobHunterScheduler | None = None
 
 
-def get_scheduler(db_manager: DatabaseManager = None, config: dict[str, Any] = None) -> JobHunterScheduler:
+def get_scheduler(db_manager: DatabaseManager = None, config: dict[str, Any] | None = None) -> JobHunterScheduler:
     """Get global scheduler instance."""
     global _scheduler_instance
     if _scheduler_instance is None:

@@ -28,7 +28,7 @@ class DuplicateGroup:
 class DeduplicationAgent(BaseAgent):
     """Agent that detects and handles duplicate job listings."""
     
-    def __init__(self, config: dict[str, Any] = None, db_manager=None):
+    def __init__(self, config: dict[str, Any] | None = None, db_manager=None):
         super().__init__("deduplication_agent", config, db_manager)
         self.config = config or get_config()._config
         self.dedup_config = self.config.get("deduplication", {})
@@ -312,7 +312,7 @@ class DeduplicationService:
         self.agent = DeduplicationAgent(db_manager=db_manager)
     
     async def deduplicate(self, jobs: list[dict[str, Any]], 
-                          existing_jobs: list[dict[str, Any]] = None) -> list[dict[str, Any]]:
+                          existing_jobs: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
         """Deduplicate jobs against each other and existing jobs."""
         existing = existing_jobs or []
         

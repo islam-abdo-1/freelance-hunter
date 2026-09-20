@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class DatabaseManager:
     """Manages database connections and sessions."""
     
-    def __init__(self, database_url: str = None):
+    def __init__(self, database_url: str | None = None):
         self.database_url = database_url
         self.engine = get_engine(database_url)
         self.SessionFactory = None
@@ -213,7 +213,7 @@ class JobRepository:
                 session.expunge(job)
             return job
     
-    def update_status(self, job_id: int, new_status: JobStatus, changed_by: str = "system", notes: str = None):
+    def update_status(self, job_id: int, new_status: JobStatus, changed_by: str = "system", notes: str | None = None):
         with self.db.session() as session:
             job = session.query(Job).get(job_id)
             if job:
