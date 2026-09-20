@@ -74,7 +74,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Deploy API to Vercel
+      - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
