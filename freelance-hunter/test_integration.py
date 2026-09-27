@@ -2,11 +2,13 @@
 import asyncio
 import os
 
+import pytest
 from agents.orchestrator import FreelanceHunterOrchestrator
 from core.database.models import init_database
 from core.database.repository import DatabaseManager
 
 
+@pytest.mark.asyncio
 async def test_orchestrator():
     """Test the orchestrator with mocked components."""
     test_dir = "data"
