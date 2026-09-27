@@ -147,7 +147,7 @@ def parse_date(date_str: str) -> datetime | None:
     
     for fmt in formats:
         try:
-            dt = datetime.strptime(date_str.strip(), fmt)
+            dt = datetime.strptime(date_str.strip(), fmt)  # noqa: DTZ007
             return dt.replace(tzinfo=timezone.utc)
         except ValueError:
             continue
@@ -462,9 +462,8 @@ def is_likely_spam(title: str, description: str, client_info: dict | None = None
             reasons.append(reason)
     
     # Check client info
-    if client_info:
-        if client_info.get('rating') == 0 and client_info.get('review_count') == 0 and client_info.get('total_spent', 0) == 0:
-            reasons.append("new client with no history")
+    if client_info and client_info.get('rating') == 0 and client_info.get('review_count') == 0 and client_info.get('total_spent', 0) == 0:
+        reasons.append("new client with no history")
     
     return len(reasons) > 0, reasons
 
