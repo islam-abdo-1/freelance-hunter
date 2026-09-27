@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Freelance Hunter - Main Entry Point
 Multi-agent system for discovering and analyzing freelance job opportunities.
