@@ -1,6 +1,7 @@
 """
 Test suite for Freelance Hunter.
 """
+
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -75,7 +76,7 @@ class TestUtils:
             "client_name": "John Doe",
             "full_description": "Need someone to enter data from PDFs into Excel",
             "date_posted": datetime.now(timezone.utc),
-            "platform": "upwork"
+            "platform": "upwork",
         }
 
         job2 = {
@@ -84,7 +85,7 @@ class TestUtils:
             "client_name": "John Doe",
             "full_description": "Need someone to enter data from PDFs into Excel",
             "date_posted": datetime.now(timezone.utc),
-            "platform": "upwork"
+            "platform": "upwork",
         }
 
         job3 = {
@@ -93,7 +94,7 @@ class TestUtils:
             "client_name": "John Doe",  # Same client
             "full_description": "Need someone to enter data from PDFs into Excel",
             "date_posted": datetime.now(timezone.utc),
-            "platform": "upwork"
+            "platform": "upwork",
         }
 
         is_dup, reason, score = is_duplicate_job(job1, job2)
@@ -102,7 +103,9 @@ class TestUtils:
         assert score == 1.0
 
         is_dup, reason, score = is_duplicate_job(job1, job3)
-        assert is_dup is True  # Should detect as duplicate based on title+client+description
+        assert (
+            is_dup is True
+        )  # Should detect as duplicate based on title+client+description
         assert score > 0.85
 
     def test_parse_date(self):
@@ -164,29 +167,49 @@ class TestUtils:
         categories = {
             "data_entry": ["data entry", "excel", "typing"],
             "presentation": ["powerpoint", "presentation", "slides"],
-            "document": ["pdf", "word", "document"]
+            "document": ["pdf", "word", "document"],
         }
 
-        cat, _ = categorize_job("Excel Data Entry Specialist", "Need data entry in Excel", categories)
+        cat, _ = categorize_job(
+            "Excel Data Entry Specialist", "Need data entry in Excel", categories
+        )
         assert cat == "data_entry"
 
-        cat, _subcat = categorize_job("PowerPoint Presentation Design", "Create beautiful slides", categories)
+        cat, _subcat = categorize_job(
+            "PowerPoint Presentation Design", "Create beautiful slides", categories
+        )
         assert cat == "presentation"
 
     def test_estimate_difficulty(self):
         """Test difficulty estimation."""
         # "format" and "spreadsheets" are in beginner keywords
-        assert estimate_difficulty("Simple Data Entry", "Easy copy paste work", []) == "easy"
-        assert estimate_difficulty("Senior ML Engineer", "Build complex ML pipeline", ["tensorflow", "pytorch"]) == "hard"
+        assert (
+            estimate_difficulty("Simple Data Entry", "Easy copy paste work", [])
+            == "easy"
+        )
+        assert (
+            estimate_difficulty(
+                "Senior ML Engineer",
+                "Build complex ML pipeline",
+                ["tensorflow", "pytorch"],
+            )
+            == "hard"
+        )
         # "format" and "spreadsheets" are in beginner keywords, so returns "easy"
-        assert estimate_difficulty("Excel Formatting", "Format spreadsheets", ["excel"]) == "easy"
+        assert (
+            estimate_difficulty("Excel Formatting", "Format spreadsheets", ["excel"])
+            == "easy"
+        )
 
     def test_estimate_effort(self):
         """Test effort estimation."""
         budget = {"budget_min": 100}
         assert estimate_effort("Quick Task", "Small job", budget, "2 hours") == "low"
         # budget < 200 returns "medium" regardless of duration for fixed price
-        assert estimate_effort("Large Project", "Comprehensive work", budget, "2 weeks") == "medium"
+        assert (
+            estimate_effort("Large Project", "Comprehensive work", budget, "2 weeks")
+            == "medium"
+        )
 
     def test_clean_text(self):
         """Test text cleaning."""
@@ -207,7 +230,7 @@ class TestUtils:
         is_spam, reasons = is_likely_spam(
             "Earn $5000 per week!",
             "Work from home, no experience needed, guaranteed income",
-            {"rating": 0, "review_count": 0, "total_spent": 0}
+            {"rating": 0, "review_count": 0, "total_spent": 0},
         )
         assert is_spam is True
         assert len(reasons) > 0
@@ -216,14 +239,17 @@ class TestUtils:
         is_spam, reasons = is_likely_spam(
             "Data Entry Specialist Needed",
             "We need someone to enter invoice data into Excel spreadsheets. Experience with Excel required.",
-            {"rating": 4.8, "review_count": 25, "total_spent": 5000}
+            {"rating": 4.8, "review_count": 25, "total_spent": 5000},
         )
         assert is_spam is False
 
     def test_validate_job_url(self):
         """Test URL validation."""
         assert validate_job_url("https://www.upwork.com/jobs/12345", "upwork") is True
-        assert validate_job_url("https://www.freelancer.com/projects/123", "freelancer") is True
+        assert (
+            validate_job_url("https://www.freelancer.com/projects/123", "freelancer")
+            is True
+        )
         # example.com doesn't match upwork.com pattern, but has a path so returns True via fallback
         assert validate_job_url("https://example.com/random", "upwork") is True
         assert validate_job_url("", "upwork") is False
@@ -234,7 +260,9 @@ class TestUtils:
         assert format_time_ago(now - timedelta(minutes=30)) == "30 minutes ago"
         assert format_time_ago(now - timedelta(hours=2)) == "2 hours ago"
         assert format_time_ago(now - timedelta(days=3)) == "3 days ago"
-        assert format_time_ago(now - timedelta(days=45)) != "45 days ago"  # Should show date
+        assert (
+            format_time_ago(now - timedelta(days=45)) != "45 days ago"
+        )  # Should show date
 
 
 class TestDatabaseModels:
@@ -250,7 +278,7 @@ class TestDatabaseModels:
             country_region="global",
             login_required=False,
             public_access=True,
-            is_active=True
+            is_active=True,
         )
         assert platform.name == "Test Platform"
         assert platform.is_active is True
@@ -271,7 +299,7 @@ class TestDatabaseModels:
             match_level=MatchLevel.GOOD_MATCH,
             risk_level=RiskLevel.LOW,
             score=75.5,
-            status=JobStatus.NEW
+            status=JobStatus.NEW,
         )
         assert job.job_id == "test123"
         assert job.verification_status == VerificationStatus.VERIFIED
@@ -321,14 +349,18 @@ class TestAgents:
             "platform": "upwork",
             "date_posted": datetime.now(timezone.utc).isoformat(),
             "budget": "$100",
-            "client_name": "Test Client"
+            "client_name": "Test Client",
         }
 
         result = await agent.run(jobs=[valid_job])
         assert result.success is True
         assert len(result.data["results"]) == 1
         # The verification agent returns VERIFIED or PARTIALLY_VERIFIED for valid jobs
-        assert result.data["results"][0]["verification_status"] in ["VERIFIED", "PARTIALLY_VERIFIED", "UNVERIFIED"]
+        assert result.data["results"][0]["verification_status"] in [
+            "VERIFIED",
+            "PARTIALLY_VERIFIED",
+            "UNVERIFIED",
+        ]
 
         # Invalid job (missing required fields)
         invalid_job = {
@@ -339,12 +371,16 @@ class TestAgents:
             "platform": "",
             "date_posted": None,
             "budget": "",
-            "client_name": ""
+            "client_name": "",
         }
 
         result = await agent.run(jobs=[invalid_job])
         # Should return UNVERIFIED or FAILED for invalid jobs
-        assert result.data["results"][0]["verification_status"] in ["UNVERIFIED", "FAILED", "PARTIALLY_VERIFIED"]
+        assert result.data["results"][0]["verification_status"] in [
+            "UNVERIFIED",
+            "FAILED",
+            "PARTIALLY_VERIFIED",
+        ]
 
     @pytest.mark.asyncio
     async def test_deduplication_agent(self):
@@ -359,7 +395,7 @@ class TestAgents:
             "job_url": "https://upwork.com/jobs/123",
             "platform": "upwork",
             "full_description": "Enter data from PDFs into Excel",
-            "date_posted": datetime.now(timezone.utc).isoformat()
+            "date_posted": datetime.now(timezone.utc).isoformat(),
         }
 
         job2 = {
@@ -368,7 +404,7 @@ class TestAgents:
             "job_url": "https://upwork.com/jobs/123",  # Same URL
             "platform": "upwork",
             "full_description": "Enter data from PDFs into Excel",
-            "date_posted": datetime.now(timezone.utc).isoformat()
+            "date_posted": datetime.now(timezone.utc).isoformat(),
         }
 
         result = await agent.run(jobs=[job1, job2])
@@ -401,7 +437,7 @@ class TestAgents:
             "client_payment_status": "verified",
             "proposals_count": 5,
             "potential_difficulty": "easy",
-            "estimated_effort": "low"
+            "estimated_effort": "low",
         }
 
         result = await agent.run(jobs=[job])
@@ -409,9 +445,18 @@ class TestAgents:
         assert len(result.data["matches"]) == 1
         match = result.data["matches"][0]
         # The matching agent returns a match level based on scoring
-        assert match["match_level"] in ["EXCELLENT_MATCH", "GOOD_MATCH", "POSSIBLE_MATCH", "WEAK_MATCH", "NOT_RELEVANT"]
+        assert match["match_level"] in [
+            "EXCELLENT_MATCH",
+            "GOOD_MATCH",
+            "POSSIBLE_MATCH",
+            "WEAK_MATCH",
+            "NOT_RELEVANT",
+        ]
         assert match["match_score"] >= 0
-        assert "microsoft excel" in match["matched_skills"] or "excel" in match["matched_skills"]
+        assert (
+            "microsoft excel" in match["matched_skills"]
+            or "excel" in match["matched_skills"]
+        )
 
     @pytest.mark.asyncio
     async def test_proposal_agent(self):
@@ -426,7 +471,7 @@ class TestAgents:
             "full_description": "Need someone to enter data from invoices into Excel spreadsheets.",
             "matched_skills": ["Excel", "Data Entry"],
             "client_name": "John Client",
-            "match_level": "GOOD_MATCH"
+            "match_level": "GOOD_MATCH",
         }
 
         result = await agent.run(jobs=[job])
@@ -455,7 +500,7 @@ class TestAgents:
             "full_description": "Work from home, no experience needed. Pay $100 to start. Contact on Telegram @scammer",
             "budget_min": 5000,
             "fixed_price_or_hourly": "hourly",
-            "category": "data_entry"
+            "category": "data_entry",
         }
 
         result = await agent.run(jobs=[risky_job])
@@ -476,7 +521,7 @@ class TestAgents:
             "client_review_count": 25,
             "client_hire_history": 15,
             "client_total_spent": 10000,
-            "client_payment_status": "verified"
+            "client_payment_status": "verified",
         }
 
         result = await agent.run(jobs=[safe_job])

@@ -1,6 +1,7 @@
 """
 Export functionality for Freelance Hunter.
 """
+
 import csv
 import json
 import logging
@@ -17,34 +18,57 @@ logger = logging.getLogger(__name__)
 
 class ExportManager:
     """Manages export of jobs to various formats."""
-    
+
     def __init__(self, output_dir: str | None = None):
         self.config = get_config()
-        self.output_dir = Path(output_dir or self.config.get("export", {}).get("output_dir", "exports"))
+        self.output_dir = Path(
+            output_dir or self.config.get("export", {}).get("output_dir", "exports")
+        )
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Column definitions for exports
         self.columns = [
-            "platform", "title", "job_url", "date_posted", "budget", "currency",
-            "category", "required_skills", "client_name", "client_country",
-            "client_rating", "client_review_count", "client_hire_history",
-            "client_total_spent", "client_payment_status",
-            "match_score", "match_level", "risk_level",
-            "short_summary", "why_it_matches", "proposal_normal",
-            "discovered_at", "verification_status", "status"
+            "platform",
+            "title",
+            "job_url",
+            "date_posted",
+            "budget",
+            "currency",
+            "category",
+            "required_skills",
+            "client_name",
+            "client_country",
+            "client_rating",
+            "client_review_count",
+            "client_hire_history",
+            "client_total_spent",
+            "client_payment_status",
+            "match_score",
+            "match_level",
+            "risk_level",
+            "short_summary",
+            "why_it_matches",
+            "proposal_normal",
+            "discovered_at",
+            "verification_status",
+            "status",
         ]
-    
-    def export_jobs(self, jobs: list[dict[str, Any]], format: str = "csv", 
-                    filename: str | None = None) -> str:
+
+    def export_jobs(
+        self,
+        jobs: list[dict[str, Any]],
+        format: str = "csv",
+        filename: str | None = None,
+    ) -> str:
         """Export jobs to specified format."""
         if not jobs:
             logger.warning("No jobs to export")
             return ""
-        
+
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = filename or f"freelance_jobs_{timestamp}.{format}"
         filepath = self.output_dir / filename
-        
+
         try:
             if format == "csv":
                 return self._export_csv(jobs, filepath)
@@ -61,7 +85,7 @@ class ExportManager:
         except Exception as e:
             logger.error(f"Export failed: {e}")
             raise
-    
+
     def _export_csv(self, jobs: list[dict[str, Any]], filepath: Path) -> str:
         """Export to CSV."""
         # Prepare rows
@@ -69,32 +93,32 @@ class ExportManager:
         for job in jobs:
             row = self._job_to_row(job)
             rows.append(row)
-        
+
         # Write CSV
-        with open(filepath, 'w', newline='', encoding='utf-8') as f:
+        with open(filepath, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=self.columns)
             writer.writeheader()
             writer.writerows(rows)
-        
+
         logger.info(f"Exported {len(jobs)} jobs to CSV: {filepath}")
         return str(filepath)
-    
+
     def _export_excel(self, jobs: list[dict[str, Any]], filepath: Path) -> str:
         """Export to Excel with formatting."""
         rows = []
         for job in jobs:
             row = self._job_to_row(job)
             rows.append(row)
-        
+
         df = pd.DataFrame(rows, columns=self.columns)
-        
+
         # Create Excel writer with formatting
-        with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Jobs')
-            
+        with pd.ExcelWriter(filepath, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name="Jobs")
+
             # Get workbook and worksheet
-            worksheet = writer.sheets['Jobs']
-            
+            worksheet = writer.sheets["Jobs"]
+
             # Auto-fit columns
             for column in worksheet.columns:
                 max_length = 0
@@ -106,71 +130,86 @@ class ExportManager:
                         pass
                 adjusted_width = min(max_length + 2, 50)
                 worksheet.column_dimensions[column_letter].width = adjusted_width
-            
+
             # Add header formatting
             from openpyxl.styles import Alignment, Font, PatternFill
+
             header_font = Font(bold=True, color="FFFFFF")
-            header_fill = PatternFill(start_color="2F5496", end_color="2F5496", fill_type="solid")
+            header_fill = PatternFill(
+                start_color="2F5496", end_color="2F5496", fill_type="solid"
+            )
             header_alignment = Alignment(horizontal="center", wrap_text=True)
-            
+
             for cell in worksheet[1]:
                 cell.font = header_font
                 cell.fill = header_fill
                 cell.alignment = header_alignment
-            
+
             # Freeze header row
             worksheet.freeze_panes = "A2"
-            
+
             # Add filters
             worksheet.auto_filter.ref = worksheet.dimensions
-        
+
         logger.info(f"Exported {len(jobs)} jobs to Excel: {filepath}")
         return str(filepath)
-    
+
     def _export_json(self, jobs: list[dict[str, Any]], filepath: Path) -> str:
         """Export to JSON."""
         export_data = {
             "exported_at": datetime.now(timezone.utc).isoformat(),
             "total_jobs": len(jobs),
-            "jobs": jobs
+            "jobs": jobs,
         }
-        
-        with open(filepath, 'w', encoding='utf-8') as f:
+
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(export_data, f, ensure_ascii=False, indent=2, default=str)
-        
+
         logger.info(f"Exported {len(jobs)} jobs to JSON: {filepath}")
         return str(filepath)
-    
+
     def _export_markdown(self, jobs: list[dict[str, Any]], filepath: Path) -> str:
         """Export to Markdown."""
         lines = []
         lines.append("# Freelance Job Opportunities")
-        lines.append(f"\nExported: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC")
+        lines.append(
+            f"\nExported: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC"
+        )
         lines.append(f"Total Jobs: {len(jobs)}")
         lines.append("")
-        
+
         # Group by match level
-        match_levels = ["EXCELLENT_MATCH", "GOOD_MATCH", "POSSIBLE_MATCH", "WEAK_MATCH", "NOT_RELEVANT"]
-        
+        match_levels = [
+            "EXCELLENT_MATCH",
+            "GOOD_MATCH",
+            "POSSIBLE_MATCH",
+            "WEAK_MATCH",
+            "NOT_RELEVANT",
+        ]
+
         for level in match_levels:
             level_jobs = [j for j in jobs if j.get("match_level") == level]
             if not level_jobs:
                 continue
-            
+
             lines.append(f"## {level.replace('_', ' ').title()} ({len(level_jobs)})")
             lines.append("")
-            
+
             for i, job in enumerate(level_jobs, 1):
                 lines.append(f"### {i}. {job.get('title', 'Untitled')}")
                 lines.append("")
                 lines.append(f"- **Platform:** {job.get('platform', 'N/A')}")
                 lines.append(f"- **Posted:** {job.get('time_since_posted', 'N/A')}")
                 lines.append(f"- **Budget:** {job.get('budget', 'N/A')}")
-                lines.append(f"- **Client:** {job.get('client_name', 'N/A')} ({job.get('client_country', 'N/A')})")
+                lines.append(
+                    f"- **Client:** {job.get('client_name', 'N/A')} ({job.get('client_country', 'N/A')})"
+                )
                 lines.append(f"- **Match Score:** {job.get('match_score', 0):.1f}")
                 lines.append(f"- **Risk Level:** {job.get('risk_level', 'N/A')}")
                 lines.append(f"- **Category:** {job.get('category', 'N/A')}")
-                lines.append(f"- **Skills:** {', '.join(job.get('matched_skills', []))}")
+                lines.append(
+                    f"- **Skills:** {', '.join(job.get('matched_skills', []))}"
+                )
                 lines.append("")
                 lines.append(f"**Summary:** {job.get('short_summary', 'N/A')[:300]}...")
                 lines.append("")
@@ -179,17 +218,19 @@ class ExportManager:
                 lines.append("**Proposal:**")
                 lines.append(f"> {job.get('proposal_normal', 'N/A')[:500]}...")
                 lines.append("")
-                lines.append(f"**Link:** [{job.get('job_url', '#')}]({job.get('job_url', '#')})")
+                lines.append(
+                    f"**Link:** [{job.get('job_url', '#')}]({job.get('job_url', '#')})"
+                )
                 lines.append("")
                 lines.append("---")
                 lines.append("")
-        
-        with open(filepath, 'w', encoding='utf-8') as f:
+
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write("\n".join(lines))
-        
+
         logger.info(f"Exported {len(jobs)} jobs to Markdown: {filepath}")
         return str(filepath)
-    
+
     def _export_html(self, jobs: list[dict[str, Any]], filepath: Path) -> str:
         """Export to HTML."""
         html_template = Template("""
@@ -319,27 +360,33 @@ class ExportManager:
 </body>
 </html>
         """)
-        
+
         # Group jobs by match level
-        match_levels = ["EXCELLENT_MATCH", "GOOD_MATCH", "POSSIBLE_MATCH", "WEAK_MATCH", "NOT_RELEVANT"]
+        match_levels = [
+            "EXCELLENT_MATCH",
+            "GOOD_MATCH",
+            "POSSIBLE_MATCH",
+            "WEAK_MATCH",
+            "NOT_RELEVANT",
+        ]
         jobs_by_level = {}
         for level in match_levels:
             level_jobs = [j for j in jobs if j.get("match_level") == level]
             if level_jobs:
                 jobs_by_level[level] = level_jobs
-        
+
         html = html_template.render(
-            export_date=datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC'),
+            export_date=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
             total_jobs=len(jobs),
-            jobs_by_level=jobs_by_level
+            jobs_by_level=jobs_by_level,
         )
-        
-        with open(filepath, 'w', encoding='utf-8') as f:
+
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(html)
-        
+
         logger.info(f"Exported {len(jobs)} jobs to HTML: {filepath}")
         return str(filepath)
-    
+
     def _job_to_row(self, job: dict[str, Any]) -> dict[str, Any]:
         """Convert job dict to export row."""
         # Format date
@@ -347,22 +394,24 @@ class ExportManager:
         if date_posted and isinstance(date_posted, str):
             try:
                 from core.utils import parse_date
+
                 dt = parse_date(date_posted)
                 if dt:
                     date_posted = dt.strftime("%Y-%m-%d %H:%M:%S")
             except (ValueError, TypeError) as e:
                 logger.debug(f"Date parse error for date_posted: {e}")
-        
+
         discovered_at = job.get("discovered_at")
         if discovered_at and isinstance(discovered_at, str):
             try:
                 from core.utils import parse_date
+
                 dt = parse_date(discovered_at)
                 if dt:
                     discovered_at = dt.strftime("%Y-%m-%d %H:%M:%S")
             except (ValueError, TypeError) as e:
                 logger.debug(f"Date parse error for discovered_at: {e}")
-        
+
         return {
             "platform": job.get("platform", ""),
             "title": job.get("title", ""),
@@ -387,13 +436,17 @@ class ExportManager:
             "proposal_normal": job.get("proposal_normal", "")[:1000],
             "discovered_at": discovered_at or "",
             "verification_status": job.get("verification_status", ""),
-            "status": job.get("status", "")
+            "status": job.get("status", ""),
         }
 
 
 # Convenience function
-def export_jobs(jobs: list[dict[str, Any]], format: str = "csv", 
-                output_dir: str | None = None, filename: str | None = None) -> str:
+def export_jobs(
+    jobs: list[dict[str, Any]],
+    format: str = "csv",
+    output_dir: str | None = None,
+    filename: str | None = None,
+) -> str:
     """Export jobs to file."""
     manager = ExportManager(output_dir)
     return manager.export_jobs(jobs, format, filename)

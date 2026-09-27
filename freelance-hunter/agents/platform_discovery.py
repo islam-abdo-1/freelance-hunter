@@ -1,6 +1,7 @@
 """
 Platform Discovery Agent - Discovers legitimate freelance platforms and job boards.
 """
+
 import asyncio
 import logging
 from dataclasses import dataclass
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PlatformInfo:
     """Information about a discovered platform."""
+
     name: str
     url: str
     jobs_url: str = ""
@@ -32,7 +34,7 @@ class PlatformInfo:
 
 class PlatformDiscoveryAgent(BaseAgent):
     """Agent that discovers and validates freelance platforms."""
-    
+
     # Known legitimate freelance platforms
     KNOWN_PLATFORMS: ClassVar[list[dict[str, Any]]] = [
         {
@@ -243,9 +245,9 @@ class PlatformDiscoveryAgent(BaseAgent):
             "login_required": True,
             "public_access": False,
             "notes": "Curated remote/flexible jobs. Subscription required.",
-        }
+        },
     ]
-    
+
     # Search queries for discovering new platforms
     DISCOVERY_QUERIES: ClassVar[list[str]] = [
         "freelance job platforms",
@@ -256,71 +258,84 @@ class PlatformDiscoveryAgent(BaseAgent):
         "freelance platforms for data entry",
         "freelance sites for powerpoint design",
         "arabic freelance platforms",
-        "latin america freelance sites"
+        "latin america freelance sites",
     ]
-    
+
     def __init__(self, config: dict[str, Any] | None = None, db_manager=None):
         super().__init__("platform_discovery", config, db_manager)
         self.config = config or get_config()._config
         self.discovered_platforms: list[PlatformInfo] = []
         self.platforms_file = "data/discovered_platforms.json"
         self._repositories = Repositories(db_manager) if db_manager else None
-    
+
     async def execute(self, **kwargs) -> AgentResult:
         """Execute platform discovery."""
-        max_new = kwargs.get("max_new_platforms", self.config.get("agents", {}).get("platform_discovery", {}).get("max_new_platforms_per_run", 5))
-        
+        max_new = kwargs.get(
+            "max_new_platforms",
+            self.config.get("agents", {})
+            .get("platform_discovery", {})
+            .get("max_new_platforms_per_run", 5),
+        )
+
         results = {
             "known_platforms_registered": 0,
             "new_platforms_discovered": 0,
             "platforms_verified": 0,
-            "platforms": []
+            "platforms": [],
         }
-        
+
         # 1. Register known platforms
         known_count = await self._register_known_platforms()
         results["known_platforms_registered"] = known_count
-        
+
         # 2. Discover new platforms via search (if enabled and AIsa available)
-        if self.config.get("agents", {}).get("platform_discovery", {}).get("enabled", True):
+        if (
+            self.config.get("agents", {})
+            .get("platform_discovery", {})
+            .get("enabled", True)
+        ):
             new_platforms = await self._discover_new_platforms(max_new)
             results["new_platforms_discovered"] = len(new_platforms)
             results["platforms"].extend([p.__dict__ for p in new_platforms])
-        
+
         # 3. Verify platform accessibility
         verified = await self._verify_platforms()
         results["platforms_verified"] = verified
-        
+
         # Save discovered platforms
         self._save_platforms()
-        
+
         return AgentResult(
             success=True,
             data=results,
-            items_found=known_count + len(new_platforms) if 'new_platforms' in locals() else known_count,
-            items_processed=verified
+            items_found=known_count + len(new_platforms)
+            if "new_platforms" in locals()
+            else known_count,
+            items_processed=verified,
         )
-    
+
     async def _register_known_platforms(self) -> int:
         """Register known platforms in database."""
         if not self._repositories:
             return len(self.KNOWN_PLATFORMS)
-        
+
         count = 0
         for platform_data in self.KNOWN_PLATFORMS:
             try:
                 self._repositories.platforms.create_or_update(platform_data)
                 count += 1
             except (ValueError, TypeError, RuntimeError) as e:
-                self.logger.error(f"Failed to register platform {platform_data['name']}: {e}")
-        
+                self.logger.error(
+                    f"Failed to register platform {platform_data['name']}: {e}"
+                )
+
         self.logger.info(f"Registered {count} known platforms")
         return count
-    
+
     async def _discover_new_platforms(self, max_new: int) -> list[PlatformInfo]:
         """Discover new platforms using search engines."""
         new_platforms = []
-        
+
         # Try to use AIsa for web search if available
         aisa_key = self.config.get("api_keys", {}).get("aisa")
         if aisa_key:
@@ -328,23 +343,23 @@ class PlatformDiscoveryAgent(BaseAgent):
                 new_platforms = await self._search_with_aisa(max_new)
             except (ValueError, TypeError, RuntimeError) as e:
                 self.logger.warning(f"AIsa search failed: {e}")
-        
+
         # Fallback: use known additional platforms
         if len(new_platforms) < max_new:
             additional = self._get_additional_platforms()
-            for platform in additional[:max_new - len(new_platforms)]:
+            for platform in additional[: max_new - len(new_platforms)]:
                 if not self._platform_exists(platform.name):
                     new_platforms.append(platform)
-        
+
         return new_platforms
-    
+
     async def _search_with_aisa(self, max_results: int) -> list[PlatformInfo]:
         """Use AIsa to search for new platforms."""
         # This would use AIsa's search capabilities
         # For now, return empty list - implementation depends on AIsa API
         self.logger.info("AIsa search for new platforms not yet implemented")
         return []
-    
+
     def _get_additional_platforms(self) -> list[PlatformInfo]:
         """Get additional known platforms not in main list."""
         additional = [
@@ -357,7 +372,7 @@ class PlatformDiscoveryAgent(BaseAgent):
                 country_region="global",
                 login_required=True,
                 public_access=False,
-                notes="Mentorship and freelance coding platform."
+                notes="Mentorship and freelance coding platform.",
             ),
             PlatformInfo(
                 name="Gun.io",
@@ -368,7 +383,7 @@ class PlatformDiscoveryAgent(BaseAgent):
                 country_region="global",
                 login_required=True,
                 public_access=False,
-                notes="Vetted freelance developers."
+                notes="Vetted freelance developers.",
             ),
             PlatformInfo(
                 name="Arc.dev",
@@ -379,7 +394,7 @@ class PlatformDiscoveryAgent(BaseAgent):
                 country_region="global",
                 login_required=False,
                 public_access=True,
-                notes="Remote developer jobs."
+                notes="Remote developer jobs.",
             ),
             PlatformInfo(
                 name="Hubstaff Talent",
@@ -390,7 +405,7 @@ class PlatformDiscoveryAgent(BaseAgent):
                 country_region="global",
                 login_required=False,
                 public_access=True,
-                notes="Free freelance marketplace."
+                notes="Free freelance marketplace.",
             ),
             PlatformInfo(
                 name="Freelancermap",
@@ -401,7 +416,7 @@ class PlatformDiscoveryAgent(BaseAgent):
                 country_region="europe",
                 login_required=False,
                 public_access=True,
-                notes="European freelance platform."
+                notes="European freelance platform.",
             ),
             PlatformInfo(
                 name="Malt",
@@ -412,7 +427,7 @@ class PlatformDiscoveryAgent(BaseAgent):
                 country_region="europe",
                 login_required=True,
                 public_access=False,
-                notes="French/European freelance platform."
+                notes="French/European freelance platform.",
             ),
             PlatformInfo(
                 name="Twago",
@@ -423,7 +438,7 @@ class PlatformDiscoveryAgent(BaseAgent):
                 country_region="global",
                 login_required=False,
                 public_access=True,
-                notes="European freelance marketplace."
+                notes="European freelance marketplace.",
             ),
             PlatformInfo(
                 name="Bark",
@@ -434,7 +449,7 @@ class PlatformDiscoveryAgent(BaseAgent):
                 country_region="uk",
                 login_required=False,
                 public_access=True,
-                notes="UK-focused service marketplace."
+                notes="UK-focused service marketplace.",
             ),
             PlatformInfo(
                 name="TaskRabbit",
@@ -445,7 +460,7 @@ class PlatformDiscoveryAgent(BaseAgent):
                 country_region="us",
                 login_required=True,
                 public_access=False,
-                notes="Local task marketplace."
+                notes="Local task marketplace.",
             ),
             PlatformInfo(
                 name="Amazon Mechanical Turk",
@@ -456,59 +471,61 @@ class PlatformDiscoveryAgent(BaseAgent):
                 country_region="global",
                 login_required=True,
                 public_access=False,
-                notes="Microtask platform. Low pay, high volume."
-            )
+                notes="Microtask platform. Low pay, high volume.",
+            ),
         ]
-        
+
         return additional
-    
+
     def _platform_exists(self, name: str) -> bool:
         """Check if platform already exists in discovered list."""
         for p in self.discovered_platforms:
             if p.name.lower() == name.lower():
                 return True
-        
+
         if self._repositories:
             existing = self._repositories.platforms.get_by_name(name)
             return existing is not None
-        
+
         return False
-    
+
     async def _verify_platforms(self) -> int:
         """Verify platform accessibility (placeholder for actual verification)."""
         # In a real implementation, this would make HTTP requests to verify
         # For now, mark known platforms as verified
         verified = 0
-        
+
         for platform_data in self.KNOWN_PLATFORMS:
             if self._repositories:
-                platform = self._repositories.platforms.get_by_name(platform_data["name"])
+                platform = self._repositories.platforms.get_by_name(
+                    platform_data["name"]
+                )
                 if platform:
                     # Would do actual verification here
                     verified += 1
-        
+
         return verified
-    
+
     def _save_platforms(self):
         """Save discovered platforms to file."""
         data = [p.__dict__ for p in self.discovered_platforms]
         save_json_file({"platforms": data}, self.platforms_file)
-    
+
     def load_platforms(self):
         """Load previously discovered platforms."""
         data = load_json_file(self.platforms_file)
         for p_data in data.get("platforms", []):
             self.discovered_platforms.append(PlatformInfo(**p_data))
-    
+
     def get_all_platforms(self) -> list[dict[str, Any]]:
         """Get all platforms (known + discovered)."""
         all_platforms = list(self.KNOWN_PLATFORMS)
-        
+
         for p in self.discovered_platforms:
             all_platforms.append(p.__dict__)
-        
+
         return all_platforms
-    
+
     def get_active_platforms(self) -> list[dict[str, Any]]:
         """Get platforms that have job listings and are active."""
         return [p for p in self.get_all_platforms() if True]
@@ -516,10 +533,10 @@ class PlatformDiscoveryAgent(BaseAgent):
 
 class PlatformValidator:
     """Validates platform accessibility and job listing availability."""
-    
+
     def __init__(self):
         self.logger = logging.getLogger("platform_validator")
-    
+
     async def validate_platform(self, platform: dict[str, Any]) -> dict[str, Any]:
         """Validate a single platform."""
         result = platform.copy()
@@ -529,14 +546,16 @@ class PlatformValidator:
             "search_works": False,
             "has_listings": False,
             "requires_login": platform.get("login_required", False),
-            "errors": []
+            "errors": [],
         }
-        
+
         # This would make actual HTTP requests
         # For now, return the platform with validation structure
         return result
-    
-    async def validate_multiple(self, platforms: list[dict[str, Any]]) -> list[dict[str, Any]]:
+
+    async def validate_multiple(
+        self, platforms: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Validate multiple platforms concurrently."""
         tasks = [self.validate_platform(p) for p in platforms]
         return await asyncio.gather(*tasks)

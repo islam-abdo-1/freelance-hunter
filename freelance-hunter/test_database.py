@@ -39,7 +39,7 @@ platform_data = {
     "country_region": "global",
     "login_required": False,
     "public_access": True,
-    "notes": "Test platform"
+    "notes": "Test platform",
 }
 platform = repos.platforms.create_or_update(platform_data)
 print(f"Created platform: {platform.name} (ID: {platform.id})")
@@ -55,7 +55,7 @@ client_data = {
     "review_count": 25,
     "hire_history": 10,
     "total_spent": 5000.0,
-    "payment_verified": True
+    "payment_verified": True,
 }
 client = repos.clients.create_or_update(client_data)
 print(f"Created client: {client.display_name} (ID: {client.id})")
@@ -93,11 +93,20 @@ job_data = {
     "match_level": MatchLevel.GOOD_MATCH,
     "risk_level": RiskLevel.LOW,
     "score": 75.5,
-    "score_breakdown": {"skill_match": 25, "recency": 18, "beginner_accessibility": 12, "budget_value": 8, "client_quality": 9, "competition": 4, "clarity": 4, "ease": 4},
+    "score_breakdown": {
+        "skill_match": 25,
+        "recency": 18,
+        "beginner_accessibility": 12,
+        "budget_value": 8,
+        "client_quality": 9,
+        "competition": 4,
+        "clarity": 4,
+        "ease": 4,
+    },
     "match_reason": "Matches your skills: Excel, Data Entry. Posted very recently. Beginner-friendly requirements.",
     "source_agent": "data_entry_agent",
     "status": JobStatus.NEW,
-    "discovered_at": datetime.now(timezone.utc)
+    "discovered_at": datetime.now(timezone.utc),
 }
 job = repos.jobs.create(job_data)
 print(f"Created job: (ID: {job.id}, job_id: {job.job_id})")
