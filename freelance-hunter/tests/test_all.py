@@ -5,6 +5,7 @@ Test suite for Freelance Hunter.
 from datetime import datetime, timedelta, timezone
 
 import pytest
+
 from core.database.models import (
     Job,
     JobStatus,

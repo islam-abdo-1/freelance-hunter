@@ -4,6 +4,7 @@ import asyncio
 import os
 
 import pytest
+
 from agents.orchestrator import FreelanceHunterOrchestrator
 from core.database.models import init_database
 from core.database.repository import DatabaseManager
