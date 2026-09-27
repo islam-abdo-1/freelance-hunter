@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from core.utils import (
     calculate_similarity,
@@ -43,8 +43,8 @@ budget = extract_budget('Rate: $25/hr')
 print(f'extract_budget hourly: {budget}')
 
 # Test is_duplicate_job
-job1 = {'job_url': 'https://upwork.com/jobs/123', 'title': 'Data Entry', 'client_name': 'John', 'full_description': 'Enter data', 'date_posted': datetime.utcnow(), 'platform': 'upwork'}
-job2 = {'job_url': 'https://upwork.com/jobs/123', 'title': 'Data Entry', 'client_name': 'John', 'full_description': 'Enter data', 'date_posted': datetime.utcnow(), 'platform': 'upwork'}
+job1 = {'job_url': 'https://upwork.com/jobs/123', 'title': 'Data Entry', 'client_name': 'John', 'full_description': 'Enter data', 'date_posted': datetime.now(timezone.utc), 'platform': 'upwork'}
+job2 = {'job_url': 'https://upwork.com/jobs/123', 'title': 'Data Entry', 'client_name': 'John', 'full_description': 'Enter data', 'date_posted': datetime.now(timezone.utc), 'platform': 'upwork'}
 is_dup, reason, score = is_duplicate_job(job1, job2)
 print(f'is_duplicate_job (same URL): {is_dup}, {reason}, {score}')
 

@@ -3,7 +3,7 @@ Verification Agent - Verifies job listings for authenticity and completeness.
 """
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
 
@@ -190,7 +190,8 @@ class VerificationAgent(BaseAgent):
                         checks_failed.append("date_invalid")
                 else:
                     checks_passed.append("date_valid")
-            except Exception:
+            except (ValueError, TypeError) as e:
+                logger.debug(f"Date parse error: {e}")
                 checks_failed.append("date_parse_error")
         else:
             checks_failed.append("date_missing")
@@ -239,7 +240,7 @@ class VerificationAgent(BaseAgent):
             checks_failed=checks_failed,
             missing_fields=missing_fields,
             warnings=warnings,
-            verified_at=datetime.utcnow(),
+            verified_at=datetime.now(timezone.utc),
             verified_fields=verified_fields
         )
     
@@ -275,10 +276,10 @@ class VerificationAgent(BaseAgent):
                 else:
                     deadline_dt = deadline
                 
-                if deadline_dt and deadline_dt < datetime.utcnow():
+                if deadline_dt and deadline_dt < datetime.now(timezone.utc):
                     return True
-            except Exception:
-                pass
+            except (ValueError, TypeError) as e:
+                logger.debug(f"Deadline parse error: {e}")
         
         # Check for expired keywords in description
         description = job.get("full_description", "").lower()
@@ -330,7 +331,7 @@ class VerificationAgent(BaseAgent):
             checks_failed=[],
             missing_fields=[],
             warnings=[],
-            verified_at=datetime.utcnow(),
+            verified_at=datetime.now(timezone.utc),
             verified_fields={}
         )
     

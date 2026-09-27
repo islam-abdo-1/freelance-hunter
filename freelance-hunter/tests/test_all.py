@@ -1,10 +1,9 @@
 """
 Test suite for Freelance Hunter.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
-
 from core.database.models import (
     Job,
     JobStatus,
@@ -75,7 +74,7 @@ class TestUtils:
             "title": "Data Entry Specialist Needed",
             "client_name": "John Doe",
             "full_description": "Need someone to enter data from PDFs into Excel",
-            "date_posted": datetime.utcnow(),
+            "date_posted": datetime.now(timezone.utc),
             "platform": "upwork"
         }
 
@@ -84,7 +83,7 @@ class TestUtils:
             "title": "Data Entry Specialist Needed",
             "client_name": "John Doe",
             "full_description": "Need someone to enter data from PDFs into Excel",
-            "date_posted": datetime.utcnow(),
+            "date_posted": datetime.now(timezone.utc),
             "platform": "upwork"
         }
 
@@ -93,7 +92,7 @@ class TestUtils:
             "title": "Data Entry Specialist Needed",  # Same title
             "client_name": "John Doe",  # Same client
             "full_description": "Need someone to enter data from PDFs into Excel",
-            "date_posted": datetime.utcnow(),
+            "date_posted": datetime.now(timezone.utc),
             "platform": "upwork"
         }
 
@@ -118,11 +117,11 @@ class TestUtils:
         # Relative time
         dt = parse_date("2 hours ago")
         assert dt is not None
-        assert (datetime.utcnow() - dt).total_seconds() < 7200 + 60  # ~2 hours
+        assert (datetime.now(timezone.utc) - dt).total_seconds() < 7200 + 60  # ~2 hours
 
         dt = parse_date("yesterday")
         assert dt is not None
-        assert (datetime.utcnow() - dt).days == 1
+        assert (datetime.now(timezone.utc) - dt).days == 1
 
         # Invalid
         assert parse_date("invalid date") is None
@@ -168,7 +167,7 @@ class TestUtils:
             "document": ["pdf", "word", "document"]
         }
 
-        cat, subcat = categorize_job("Excel Data Entry Specialist", "Need data entry in Excel", categories)
+        cat, _ = categorize_job("Excel Data Entry Specialist", "Need data entry in Excel", categories)
         assert cat == "data_entry"
 
         cat, _subcat = categorize_job("PowerPoint Presentation Design", "Create beautiful slides", categories)
@@ -231,7 +230,7 @@ class TestUtils:
 
     def test_format_time_ago(self):
         """Test time ago formatting."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         assert format_time_ago(now - timedelta(minutes=30)) == "30 minutes ago"
         assert format_time_ago(now - timedelta(hours=2)) == "2 hours ago"
         assert format_time_ago(now - timedelta(days=3)) == "3 days ago"
@@ -320,7 +319,7 @@ class TestAgents:
             "full_description": "Enter data from PDFs into Excel spreadsheets",
             "job_url": "https://upwork.com/jobs/123",
             "platform": "upwork",
-            "date_posted": datetime.utcnow().isoformat(),
+            "date_posted": datetime.now(timezone.utc).isoformat(),
             "budget": "$100",
             "client_name": "Test Client"
         }
@@ -360,7 +359,7 @@ class TestAgents:
             "job_url": "https://upwork.com/jobs/123",
             "platform": "upwork",
             "full_description": "Enter data from PDFs into Excel",
-            "date_posted": datetime.utcnow().isoformat()
+            "date_posted": datetime.now(timezone.utc).isoformat()
         }
 
         job2 = {
@@ -369,7 +368,7 @@ class TestAgents:
             "job_url": "https://upwork.com/jobs/123",  # Same URL
             "platform": "upwork",
             "full_description": "Enter data from PDFs into Excel",
-            "date_posted": datetime.utcnow().isoformat()
+            "date_posted": datetime.now(timezone.utc).isoformat()
         }
 
         result = await agent.run(jobs=[job1, job2])
@@ -390,7 +389,7 @@ class TestAgents:
             "full_description": "Need someone to enter data from invoices into Excel spreadsheets. Must have Excel experience.",
             "required_skills": ["Excel", "Data Entry"],
             "matched_skills": ["Excel", "Data Entry"],
-            "date_posted": datetime.utcnow().isoformat(),
+            "date_posted": datetime.now(timezone.utc).isoformat(),
             "budget_min": 100,
             "budget_max": 200,
             "currency": "USD",

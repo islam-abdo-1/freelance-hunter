@@ -4,14 +4,13 @@ Export functionality for Freelance Hunter.
 import csv
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from jinja2 import Template
-
 from core.config.loader import get_config
+from jinja2 import Template
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +41,7 @@ class ExportManager:
             logger.warning("No jobs to export")
             return ""
         
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = filename or f"freelance_jobs_{timestamp}.{format}"
         filepath = self.output_dir / filename
         
@@ -103,7 +102,7 @@ class ExportManager:
                 for cell in column:
                     try:
                         max_length = max(max_length, len(str(cell.value)))
-                    except:
+                    except (ValueError, TypeError):
                         pass
                 adjusted_width = min(max_length + 2, 50)
                 worksheet.column_dimensions[column_letter].width = adjusted_width
@@ -131,7 +130,7 @@ class ExportManager:
     def _export_json(self, jobs: list[dict[str, Any]], filepath: Path) -> str:
         """Export to JSON."""
         export_data = {
-            "exported_at": datetime.utcnow().isoformat(),
+            "exported_at": datetime.now(timezone.utc).isoformat(),
             "total_jobs": len(jobs),
             "jobs": jobs
         }
@@ -146,7 +145,7 @@ class ExportManager:
         """Export to Markdown."""
         lines = []
         lines.append("# Freelance Job Opportunities")
-        lines.append(f"\nExported: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
+        lines.append(f"\nExported: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC")
         lines.append(f"Total Jobs: {len(jobs)}")
         lines.append("")
         
@@ -330,7 +329,7 @@ class ExportManager:
                 jobs_by_level[level] = level_jobs
         
         html = html_template.render(
-            export_date=datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),
+            export_date=datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC'),
             total_jobs=len(jobs),
             jobs_by_level=jobs_by_level
         )
@@ -351,8 +350,8 @@ class ExportManager:
                 dt = parse_date(date_posted)
                 if dt:
                     date_posted = dt.strftime("%Y-%m-%d %H:%M:%S")
-            except:
-                pass
+            except (ValueError, TypeError) as e:
+                logger.debug(f"Date parse error for date_posted: {e}")
         
         discovered_at = job.get("discovered_at")
         if discovered_at and isinstance(discovered_at, str):
@@ -361,8 +360,8 @@ class ExportManager:
                 dt = parse_date(discovered_at)
                 if dt:
                     discovered_at = dt.strftime("%Y-%m-%d %H:%M:%S")
-            except:
-                pass
+            except (ValueError, TypeError) as e:
+                logger.debug(f"Date parse error for discovered_at: {e}")
         
         return {
             "platform": job.get("platform", ""),

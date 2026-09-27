@@ -3,7 +3,7 @@ Deduplication Agent - Detects and removes duplicate job listings.
 """
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from core.config.loader import get_config
@@ -208,13 +208,13 @@ class DeduplicationAgent(BaseAgent):
                     from core.utils import parse_date
                     discovered = parse_date(discovered)
                 if discovered:
-                    hours_ago = (datetime.utcnow() - discovered).total_seconds() / 3600
+                    hours_ago = (datetime.now(timezone.utc) - discovered).total_seconds() / 3600
                     if hours_ago < 24:
                         score += 5
                     elif hours_ago < 168:
                         score += 2
-            except Exception:
-                pass
+            except (ValueError, TypeError) as e:
+                logger.debug(f"Error calculating hours ago: {e}")
         
         return score
     
@@ -265,8 +265,8 @@ class DeduplicationAgent(BaseAgent):
                     dup_disc = parse_date(dup_disc)
                 if dup_disc and dup_disc < canon_disc:
                     canonical["discovered_at"] = dup_disc.isoformat() if hasattr(dup_disc, 'isoformat') else str(dup_disc)
-            except Exception:
-                pass
+            except (ValueError, TypeError) as e:
+                logger.debug(f"Error parsing dates for merge: {e}")
         
         return canonical
     
@@ -297,10 +297,10 @@ class DeduplicationAgent(BaseAgent):
                         duplicate_of_id=dup_job.id,
                         similarity_score=score,
                         duplicate_reason=reason,
-                        detected_at=datetime.utcnow()
+                        detected_at=datetime.now(timezone.utc)
                     )
                     session.add(duplicate_record)
-            except Exception as e:
+            except (ValueError, TypeError, RuntimeError) as e:
                 logger.error(f"Failed to record duplicate: {e}")
 
 

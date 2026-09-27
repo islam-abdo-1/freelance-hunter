@@ -4,7 +4,7 @@ Risk Detection Agent - Identifies red flags and risks in job listings.
 import logging
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -239,7 +239,7 @@ class RiskDetectionAgent(BaseAgent):
                         severity=config["severity"],
                         description=config["description"],
                         evidence=evidence,
-                        detected_at=datetime.utcnow()
+                        detected_at=datetime.now(timezone.utc)
                     ))
                     break  # One match per category is enough
         
@@ -309,7 +309,7 @@ class RiskDetectionAgent(BaseAgent):
                     severity=RiskLevel.MEDIUM,
                     description=f"Hourly rate ${budget_min} unusually high for {category}",
                     evidence=f"Budget: ${budget_min}/hr, Category: {category}",
-                    detected_at=datetime.utcnow()
+                    detected_at=datetime.now(timezone.utc)
                 ))
             elif budget_min < 3:  # Very low
                 flags.append(RedFlag(
@@ -317,7 +317,7 @@ class RiskDetectionAgent(BaseAgent):
                     severity=RiskLevel.MEDIUM,
                     description=f"Hourly rate ${budget_min} extremely low",
                     evidence=f"Budget: ${budget_min}/hr",
-                    detected_at=datetime.utcnow()
+                    detected_at=datetime.now(timezone.utc)
                 ))
         elif job_type == "fixed" and budget_max > fixed_max:
             flags.append(RedFlag(
@@ -325,7 +325,7 @@ class RiskDetectionAgent(BaseAgent):
                 severity=RiskLevel.MEDIUM,
                 description=f"Fixed price ${budget_max} unusually high for {category}",
                 evidence=f"Budget: ${budget_max} fixed, Category: {category}",
-                detected_at=datetime.utcnow()
+                detected_at=datetime.now(timezone.utc)
             ))
         
         return flags
@@ -345,7 +345,7 @@ class RiskDetectionAgent(BaseAgent):
                 severity=RiskLevel.MEDIUM,
                 description="New client with no history offering high budget",
                 evidence=f"Hire history: {hire_history}, Total spent: ${total_spent}, Budget: ${budget_max}",
-                detected_at=datetime.utcnow()
+                detected_at=datetime.now(timezone.utc)
             ))
         
         # Zero rating with reviews
@@ -357,7 +357,7 @@ class RiskDetectionAgent(BaseAgent):
                 severity=RiskLevel.LOW,
                 description="Client has reviews but zero rating",
                 evidence=f"Rating: {rating}, Reviews: {review_count}",
-                detected_at=datetime.utcnow()
+                detected_at=datetime.now(timezone.utc)
             ))
         
         # Unverified payment
@@ -368,7 +368,7 @@ class RiskDetectionAgent(BaseAgent):
                 severity=RiskLevel.LOW,
                 description="Client payment method not verified",
                 evidence=f"Payment status: {payment_status}",
-                detected_at=datetime.utcnow()
+                detected_at=datetime.now(timezone.utc)
             ))
         
         return flags

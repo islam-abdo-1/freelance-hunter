@@ -3,7 +3,7 @@ Job Matching Agent - Evaluates jobs against user profile and skills.
 """
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -217,7 +217,7 @@ class JobMatchingAgent(BaseAgent):
             if not date_posted:
                 return 5.0
             
-            hours_ago = (datetime.utcnow() - date_posted).total_seconds() / 3600
+            hours_ago = (datetime.now(timezone.utc) - date_posted).total_seconds() / 3600
             
             if hours_ago <= 24:
                 return self.max_scores["recency"]  # 20
@@ -229,7 +229,8 @@ class JobMatchingAgent(BaseAgent):
                 return self.max_scores["recency"] * 0.2  # 4
             else:
                 return 1.0
-        except Exception:
+        except (ValueError, TypeError) as e:
+            logger.debug(f"Error calculating recency: {e}")
             return 5.0
     
     def _calculate_beginner_accessibility(self, job: dict[str, Any]) -> float:

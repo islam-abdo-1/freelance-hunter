@@ -8,7 +8,7 @@ import asyncio
 import logging
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -118,7 +118,7 @@ async def run_scheduler(args):
             jobs = scheduler.get_scheduled_jobs()
             for job in jobs.values():
                 next_run = job.next_run.strftime("%Y-%m-%d %H:%M:%S") if job.next_run else "N/A"
-                print(f"[{datetime.now().strftime('%H:%M:%S')}] {job.name}: next run at {next_run}")
+                print(f"[{datetime.now(timezone.utc).strftime('%H:%M:%S')}] {job.name}: next run at {next_run}")
     except KeyboardInterrupt:
         print("\nShutting down scheduler...")
         scheduler.stop()
@@ -164,7 +164,7 @@ async def generate_report(args):
     print(report)
     
     if args.output:
-        with open(args.output, 'w', encoding='utf-8') as f:
+        with open(args.output, 'w', encoding='utf-8') as f:  # noqa: ASYNC230
             f.write(report)
         print(f"\nReport saved to {args.output}")
 

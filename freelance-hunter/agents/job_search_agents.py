@@ -5,7 +5,7 @@ import asyncio
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from core.config.loader import get_config
@@ -133,7 +133,7 @@ class BaseJobSearchAgent(BaseAgent, ABC):
         if not job.date_posted:
             return priority >= 3  # Allow unknown dates for lower priority
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         hours_ago = (now - job.date_posted).total_seconds() / 3600
         
         if priority == 1:
@@ -249,7 +249,7 @@ class BaseJobSearchAgent(BaseAgent, ABC):
                         if len(platform_jobs) >= self.max_results:
                             break
                             
-                    except Exception as e:
+                    except (ValueError, TypeError, RuntimeError) as e:
                         error_msg = f"Error searching {platform['name']} page {page} for '{query}': {e}"
                         self.logger.warning(error_msg)
                         errors.append(error_msg)

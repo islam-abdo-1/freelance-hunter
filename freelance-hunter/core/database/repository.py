@@ -4,7 +4,7 @@ Database manager and repository classes for Freelance Hunter.
 import logging
 from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import asc, desc, func, or_
@@ -78,7 +78,7 @@ class PlatformRepository:
                 for key, value in platform_data.items():
                     if hasattr(platform, key) and key != 'id':
                         setattr(platform, key, value)
-                platform.updated_at = datetime.utcnow()
+                platform.updated_at = datetime.now(timezone.utc)
             else:
                 platform = Platform(**platform_data)
                 session.add(platform)
@@ -109,7 +109,7 @@ class PlatformRepository:
         with self.db.session() as session:
             platform = session.query(Platform).get(platform_id)
             if platform:
-                platform.last_scanned_at = datetime.utcnow()
+                platform.last_scanned_at = datetime.now(timezone.utc)
                 platform.scan_count += 1
                 platform.jobs_found += jobs_found
                 platform.verified_jobs += verified
@@ -137,7 +137,7 @@ class ClientRepository:
                 for key, value in client_data.items():
                     if hasattr(client, key) and key not in ['id', 'platform_id', 'platform_client_id']:
                         setattr(client, key, value)
-                client.updated_at = datetime.utcnow()
+                client.updated_at = datetime.now(timezone.utc)
             else:
                 client = Client(**client_data)
                 session.add(client)
@@ -220,7 +220,7 @@ class JobRepository:
                 old_status = job.status
                 job.status = new_status
                 if new_status == JobStatus.APPLIED:
-                    job.applied_at = datetime.utcnow()
+                    job.applied_at = datetime.now(timezone.utc)
                 
                 history = JobStatusHistory(
                     job_id=job_id,
@@ -311,7 +311,7 @@ class JobRepository:
                 Job.verification_status == VerificationStatus.VERIFIED
             ).scalar()
             new_today = session.query(func.count(Job.id)).filter(
-                Job.discovered_at >= datetime.utcnow().date()
+                Job.discovered_at >= datetime.now(timezone.utc).date()
             ).scalar()
             high_match = session.query(func.count(Job.id)).filter(
                 Job.match_level.in_([MatchLevel.EXCELLENT_MATCH, MatchLevel.GOOD_MATCH])
@@ -337,7 +337,7 @@ class JobRepository:
     
     def get_recent_jobs(self, hours: int = 24, limit: int = 50) -> list[Job]:
         with self.db.session() as session:
-            cutoff = datetime.utcnow() - timedelta(hours=hours)
+            cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
             jobs = session.query(Job).filter(
                 Job.discovered_at >= cutoff
             ).order_by(desc(Job.score)).limit(limit).all()
@@ -394,7 +394,7 @@ class AgentRepository:
                 for key, value in agent_data.items():
                     if hasattr(agent, key) and key != 'id':
                         setattr(agent, key, value)
-                agent.updated_at = datetime.utcnow()
+                agent.updated_at = datetime.now(timezone.utc)
             else:
                 agent = Agent(**agent_data)
                 session.add(agent)

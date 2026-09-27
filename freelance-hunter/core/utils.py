@@ -5,7 +5,7 @@ import hashlib
 import json
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from difflib import SequenceMatcher
 from typing import Any
 from urllib.parse import parse_qs, urlparse
@@ -53,7 +53,7 @@ def extract_domain(url: str) -> str:
     """Extract domain from URL."""
     try:
         return urlparse(url).netloc.lower().replace('www.', '')
-    except Exception:
+    except ValueError:
         return ""
 
 
@@ -113,9 +113,8 @@ def is_duplicate_job(job1: dict[str, Any], job2: dict[str, Any], threshold: floa
                 date1 = parse_date(date1)
             if isinstance(date2, str):
                 date2 = parse_date(date2)
-            if date1 and date2 and abs((date1 - date2).total_seconds()) < 3600:  # Within 1 hour
-                if title_sim > 0.7:
-                    return True, "date_title", title_sim
+            if date1 and date2 and abs((date1 - date2).total_seconds()) < 3600 and title_sim > 0.7:
+                return True, "date_title", title_sim
     
     return False, "", 0.0
 
@@ -148,7 +147,8 @@ def parse_date(date_str: str) -> datetime | None:
     
     for fmt in formats:
         try:
-            return datetime.strptime(date_str.strip(), fmt)
+            dt = datetime.strptime(date_str.strip(), fmt)
+            return dt.replace(tzinfo=timezone.utc)
         except ValueError:
             continue
     
@@ -159,7 +159,7 @@ def parse_date(date_str: str) -> datetime | None:
 def parse_relative_time(text: str) -> datetime | None:
     """Parse relative time expressions like '2 hours ago', '3 days ago'."""
     text = text.lower().strip()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     patterns = [
         (r'(\d+)\s*second', 'seconds'),
@@ -221,7 +221,10 @@ def format_time_ago(dt: datetime) -> str:
     if not dt:
         return "Unknown"
     
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
+    # Make dt timezone-aware if it's naive
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
     diff = now - dt
     
     if diff.days > 30:
@@ -460,9 +463,8 @@ def is_likely_spam(title: str, description: str, client_info: dict | None = None
     
     # Check client info
     if client_info:
-        if client_info.get('rating') == 0 and client_info.get('review_count') == 0:
-            if client_info.get('total_spent', 0) == 0:
-                reasons.append("new client with no history")
+        if client_info.get('rating') == 0 and client_info.get('review_count') == 0 and client_info.get('total_spent', 0) == 0:
+            reasons.append("new client with no history")
     
     return len(reasons) > 0, reasons
 
@@ -502,7 +504,7 @@ def load_json_file(filepath: str) -> dict[str, Any]:
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             return json.load(f)
-    except Exception as e:
+    except (OSError, json.JSONDecodeError) as e:
         logger.error(f"Failed to load JSON from {filepath}: {e}")
         return {}
 
@@ -512,7 +514,7 @@ def save_json_file(data: dict[str, Any], filepath: str):
     try:
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2, default=str)
-    except Exception as e:
+    except (OSError, TypeError) as e:
         logger.error(f"Failed to save JSON to {filepath}: {e}")
 
 

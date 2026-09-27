@@ -6,7 +6,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -147,7 +147,7 @@ class AgentOrchestrator:
         # Record execution
         self.execution_history.append({
             "agent": name,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "success": result.success,
             "execution_time": result.execution_time,
             "items_found": result.items_found,
@@ -178,7 +178,7 @@ class AgentOrchestrator:
                     # Record execution
                     self.execution_history.append({
                         "agent": name,
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                         "success": result.success,
                         "execution_time": result.execution_time,
                         "items_found": result.items_found,

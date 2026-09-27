@@ -4,7 +4,7 @@ Platform Discovery Agent - Discovers legitimate freelance platforms and job boar
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, ClassVar
 
 from core.config.loader import get_config
 from core.database.repository import Repositories
@@ -34,7 +34,7 @@ class PlatformDiscoveryAgent(BaseAgent):
     """Agent that discovers and validates freelance platforms."""
     
     # Known legitimate freelance platforms
-    KNOWN_PLATFORMS = [
+    KNOWN_PLATFORMS: ClassVar[list[dict[str, Any]]] = [
         {
             "name": "Upwork",
             "url": "https://www.upwork.com",
@@ -247,7 +247,7 @@ class PlatformDiscoveryAgent(BaseAgent):
     ]
     
     # Search queries for discovering new platforms
-    DISCOVERY_QUERIES = [
+    DISCOVERY_QUERIES: ClassVar[list[str]] = [
         "freelance job platforms",
         "best freelance websites 2024",
         "freelance marketplaces for beginners",
@@ -311,7 +311,7 @@ class PlatformDiscoveryAgent(BaseAgent):
             try:
                 self._repositories.platforms.create_or_update(platform_data)
                 count += 1
-            except Exception as e:
+            except (ValueError, TypeError, RuntimeError) as e:
                 self.logger.error(f"Failed to register platform {platform_data['name']}: {e}")
         
         self.logger.info(f"Registered {count} known platforms")
@@ -326,7 +326,7 @@ class PlatformDiscoveryAgent(BaseAgent):
         if aisa_key:
             try:
                 new_platforms = await self._search_with_aisa(max_new)
-            except Exception as e:
+            except (ValueError, TypeError, RuntimeError) as e:
                 self.logger.warning(f"AIsa search failed: {e}")
         
         # Fallback: use known additional platforms
@@ -502,10 +502,7 @@ class PlatformDiscoveryAgent(BaseAgent):
     
     def get_all_platforms(self) -> list[dict[str, Any]]:
         """Get all platforms (known + discovered)."""
-        all_platforms = []
-        
-        for p in self.KNOWN_PLATFORMS:
-            all_platforms.append(p)
+        all_platforms = list(self.KNOWN_PLATFORMS)
         
         for p in self.discovered_platforms:
             all_platforms.append(p.__dict__)

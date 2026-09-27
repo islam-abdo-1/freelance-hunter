@@ -4,7 +4,7 @@ Proposal/Application Agent - Generates customized proposals for jobs.
 import logging
 import random
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from core.config.loader import get_config
@@ -82,7 +82,7 @@ class ProposalAgent(BaseAgent):
             short=short,
             normal=normal,
             ultra_short=ultra_short,
-            generated_at=datetime.utcnow()
+            generated_at=datetime.now(timezone.utc)
         )
     
     def _analyze_job(self, job: dict[str, Any]) -> dict[str, Any]:

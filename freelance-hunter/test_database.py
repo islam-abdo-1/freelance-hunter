@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 from core.database.models import (
     JobStatus,
@@ -97,7 +97,7 @@ job_data = {
     "match_reason": "Matches your skills: Excel, Data Entry. Posted very recently. Beginner-friendly requirements.",
     "source_agent": "data_entry_agent",
     "status": JobStatus.NEW,
-    "discovered_at": datetime.utcnow()
+    "discovered_at": datetime.now(timezone.utc)
 }
 job = repos.jobs.create(job_data)
 print(f"Created job: (ID: {job.id}, job_id: {job.job_id})")

@@ -7,7 +7,7 @@ import logging
 import smtplib
 import ssl
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Any
@@ -78,7 +78,7 @@ class EmailService:
             logger.info(f"Email sent to {to_email}: {subject}")
             return True
             
-        except Exception as e:
+        except (smtplib.SMTPException, OSError) as e:
             logger.error(f"Failed to send email to {to_email}: {e}")
             return False
     
@@ -132,7 +132,7 @@ class EmailService:
         <body>
             <div class="header">
                 <h1>🎯 Freelance Hunter</h1>
-                <p>اكتمل المسح التلقائي - {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
+                <p>اكتمل المسح التلقائي - {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}</p>
             </div>
             <div class="content">
                 <h2>📊 ملخص المسح</h2>
@@ -172,7 +172,7 @@ class EmailService:
         Freelance Hunter - اكتمل المسح التلقائي
         ==============================
         
-        ملخص المسح ({datetime.now().strftime('%Y-%m-%d %H:%M')}):
+        ملخص المسح ({datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}):
         - تم التحقق من: {stats.get('verified_jobs', 0)} وظيفة
         - فرص ملائمة: {stats.get('relevant_jobs', 0)}
         - مطابقة عالية: {stats.get('high_match_jobs', 0)}
@@ -299,7 +299,7 @@ class EmailService:
             <li>اكتمال المسح التلقائي</li>
             <li>العثور على فرص مطابقة بدرجة عالية</li>
         </ul>
-        <p style="color: #6b7280; font-size: 14px;">{datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
+        <p style="color: #6b7280; font-size: 14px;">{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}</p>
         </body></html>
         """
         

@@ -53,7 +53,7 @@ async def test_orchestrator():
         # Cleanup
         try:
             os.remove(test_db)
-        except:
+        except OSError:
             pass
 
 if __name__ == "__main__":

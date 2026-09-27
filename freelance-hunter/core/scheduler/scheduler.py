@@ -4,15 +4,15 @@ Scheduler for automated job hunting runs.
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
+from agents.orchestrator import FreelanceHunterOrchestrator, run_pipeline
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
-from agents.orchestrator import FreelanceHunterOrchestrator, run_pipeline
 from core.config.loader import get_config
 from core.database.repository import DatabaseManager
 
@@ -182,7 +182,7 @@ class JobHunterScheduler:
             logger.error("Orchestrator not set, cannot run scheduled scan")
             return
         
-        scheduled_job.last_run = datetime.utcnow()
+        scheduled_job.last_run = datetime.now(timezone.utc)
         scheduled_job.run_count += 1
         scheduled_job.last_status = "running"
         
@@ -192,7 +192,7 @@ class JobHunterScheduler:
         if self.on_job_start:
             try:
                 await self.on_job_start(scheduled_job)
-            except Exception as e:
+            except (ValueError, TypeError, RuntimeError) as e:
                 logger.error(f"Start callback failed: {e}")
         
         try:
@@ -217,19 +217,19 @@ class JobHunterScheduler:
             if self.on_job_complete:
                 try:
                     await self.on_job_complete(scheduled_job, result)
-                except Exception as e:
+                except (ValueError, TypeError, RuntimeError) as e:
                     logger.error(f"Complete callback failed: {e}")
                     
         except Exception as e:
             scheduled_job.last_status = "failed"
             scheduled_job.last_error = str(e)
-            logger.exception(f"Scheduled scan {scheduled_job.name} failed: {e}")
+            logger.exception(f"Scheduled scan {scheduled_job.name} failed")
             
             # Call error callback
             if self.on_job_error:
                 try:
                     await self.on_job_error(scheduled_job, e)
-                except Exception as callback_error:
+                except (ValueError, TypeError, RuntimeError) as callback_error:
                     logger.error(f"Error callback failed: {callback_error}")
     
     async def run_now(self, job_id: str = "manual_run") -> Any:

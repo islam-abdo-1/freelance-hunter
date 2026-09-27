@@ -4,7 +4,7 @@ Orchestrator Agent - Coordinates the entire freelance job hunting pipeline.
 import logging
 import uuid
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from core.config.loader import get_config
@@ -79,7 +79,7 @@ class FreelanceHunterOrchestrator:
     async def run_full_pipeline(self, **kwargs) -> PipelineResult:
         """Run the complete job hunting pipeline."""
         run_id = str(uuid.uuid4())[:8]
-        started_at = datetime.utcnow()
+        started_at = datetime.now(timezone.utc)
         errors = []
         
         # Create search run record
@@ -138,7 +138,7 @@ class FreelanceHunterOrchestrator:
             if self.repositories:
                 await self._save_jobs(final_jobs)
             
-            completed_at = datetime.utcnow()
+            completed_at = datetime.now(timezone.utc)
             duration = (completed_at - started_at).total_seconds()
             
             # Calculate stats
@@ -170,10 +170,10 @@ class FreelanceHunterOrchestrator:
             )
             
         except Exception as e:
-            self.logger.exception(f"Pipeline run {run_id} failed: {e}")
+            self.logger.exception(f"Pipeline run {run_id} failed")
             errors.append(str(e))
             
-            completed_at = datetime.utcnow()
+            completed_at = datetime.now(timezone.utc)
             duration = (completed_at - started_at).total_seconds()
             
             if self.repositories and search_run:
@@ -319,7 +319,7 @@ class FreelanceHunterOrchestrator:
                             job_data[date_field] = parse_date(job_data[date_field])
                     
                     self.repositories.jobs.create(job_data)
-            except Exception as e:
+            except (ValueError, TypeError, RuntimeError) as e:
                 self.logger.error(f"Failed to save job {job_data.get('job_id')}: {e}")
     
     async def run_scheduled_scan(self, interval_hours: int = 6):
@@ -399,7 +399,7 @@ class FreelanceHunterOrchestrator:
     def export_jobs(self, format: str = "csv", filters: dict[str, Any] | None = None) -> str:
         """Export jobs to file."""
         # This would be implemented with actual export logic
-        return f"exports/jobs_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.{format}"
+        return f"exports/jobs_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.{format}"
     
     def generate_daily_report(self) -> str:
         """Generate daily report."""
@@ -414,7 +414,7 @@ class FreelanceHunterOrchestrator:
         report = []
         report.append("=" * 50)
         report.append("FREELANCE JOB HUNTER - DAILY REPORT")
-        report.append(f"{datetime.utcnow().strftime('%d %B %Y')}")
+        report.append(f"{datetime.now(timezone.utc).strftime('%d %B %Y')}")
         report.append("=" * 50)
         report.append("")
         

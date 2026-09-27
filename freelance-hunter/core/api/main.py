@@ -5,16 +5,16 @@ import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
+from agents.orchestrator import FreelanceHunterOrchestrator, run_pipeline
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from agents.orchestrator import FreelanceHunterOrchestrator, run_pipeline
 from core.config.loader import get_config as get_config_sync
 from core.config.loader import reload_config
 from core.database.models import JobStatus, init_database
@@ -159,7 +159,7 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
 @app.get("/api/stats")
@@ -381,7 +381,7 @@ def _get_status_message(status: str, run) -> str:
 @app.post("/api/scheduler/control")
 async def control_scheduler(control: SchedulerControl):
     """Control the scheduler (start/stop/pause/resume)."""
-    global orchestrator
+    global orchestrator  # noqa: PLW0602
     
     if control.action == "start":
         return {"message": "تم بدء المجدول", "action": "started", "interval_hours": control.interval_hours or 6}
@@ -468,6 +468,9 @@ async def get_config():
         "email_config": config.email_config,
         "email_notifications": config.email_notifications
     }
+
+
+@app.post("/api/export")
 async def export_jobs(request: ExportRequest):
     """Export jobs to file."""
     if not orchestrator:
@@ -476,7 +479,7 @@ async def export_jobs(request: ExportRequest):
     # Create export job record
     if orchestrator.repositories:
         export = orchestrator.repositories.exports.create({
-            "export_id": f"export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            "export_id": f"export_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             "format": request.format,
             "filters": request.filters or {},
             "status": "processing"
@@ -489,7 +492,7 @@ async def export_jobs(request: ExportRequest):
         orchestrator.repositories.exports.update(export.export_id, {
             "status": "completed",
             "file_path": filepath,
-            "completed_at": datetime.utcnow()
+            "completed_at": datetime.now(timezone.utc)
         })
     
     return FileResponse(
@@ -506,7 +509,7 @@ async def get_daily_report():
         raise HTTPException(status_code=503, detail="Orchestrator not initialized")
     
     report = orchestrator.generate_daily_report()
-    return {"report": report, "generated_at": datetime.utcnow().isoformat()}
+    return {"report": report, "generated_at": datetime.now(timezone.utc).isoformat()}
 
 
 @app.get("/api/platforms")
@@ -547,16 +550,6 @@ async def get_agent_stats():
         raise HTTPException(status_code=503, detail="Orchestrator not initialized")
     
     return orchestrator.agent_orchestrator.get_all_stats()
-
-
-@app.get("/api/config")
-async def get_config():
-    """Get current configuration."""
-    config = get_config()
-    return {
-        "config": config._config,
-        "profile": config._profile
-    }
 
 
 @app.post("/api/config/reload")
