@@ -10,8 +10,9 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from core.config.loader import get_config
 from jinja2 import Template
+
+from core.config.loader import get_config
 
 logger = logging.getLogger(__name__)
 

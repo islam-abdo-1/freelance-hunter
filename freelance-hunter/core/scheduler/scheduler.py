@@ -9,11 +9,11 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
-from agents.orchestrator import FreelanceHunterOrchestrator, run_pipeline
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
+from agents.orchestrator import FreelanceHunterOrchestrator, run_pipeline
 from core.config.loader import get_config
 from core.database.repository import DatabaseManager
 

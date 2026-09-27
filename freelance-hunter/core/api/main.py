@@ -9,13 +9,13 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any
 
-from agents.orchestrator import FreelanceHunterOrchestrator, run_pipeline
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from agents.orchestrator import FreelanceHunterOrchestrator, run_pipeline
 from core.config.loader import get_config as get_config_sync
 from core.config.loader import reload_config
 from core.database.models import JobStatus, init_database
